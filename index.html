@@ -1,210 +1,1579 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CPU Scheduler ✨</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CPU Proceso Dinámico — FCFS &amp; SPN</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #060d1f;
+  --bg-2:      #0b1529;
+  --bg-3:      #0f1d35;
+  --bg-4:      #14243f;
+  --bg-5:      #192d4e;
+
+  --cyan:      #00e5d4;
+  --cyan-dim:  #00b8aa;
+  --cyan-glow: rgba(0,229,212,.18);
+  --cyan-faint:rgba(0,229,212,.07);
+
+  --purple:    #a78bfa;
+  --purple-dim:#7c3aed;
+  --purple-faint:rgba(167,139,250,.08);
+
+  --pink:      #f472b6;
+  --amber:     #fbbf24;
+  --emerald:   #34d399;
+  --red:       #f87171;
+  --blue:      #60a5fa;
+
+  --white:     #f0f6ff;
+  --white-2:   #c8d8ee;
+  --white-3:   #8fa8c8;
+  --white-4:   #4a6480;
+  --white-5:   #2a3f58;
+
+  --border:    rgba(255,255,255,.06);
+  --border-2:  rgba(255,255,255,.10);
+  --border-3:  rgba(255,255,255,.14);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  --font: 'Space Grotesk', sans-serif;
+  --mono: 'Fira Code', monospace;
+
+  --glow-cyan:   0 0 20px rgba(0,229,212,.25);
+  --glow-purple: 0 0 20px rgba(167,139,250,.25);
+  --shadow:      0 8px 32px rgba(0,0,0,.45);
+  --shadow-sm:   0 2px 12px rgba(0,0,0,.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--white);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ── NOISE TEXTURE ───────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: .4;
+}
+
+/* ── AMBIENT GLOW ORBS ───────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,212,.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--white-5); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--white-4); }
+
+/* ════════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════════ */
+.app {
+  display: grid;
+  grid-template-rows: 54px 1fr;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TOPBAR ─────────────────────────────── */
+.topbar {
+  background: rgba(11,21,41,.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--bg);
+  flex-shrink: 0;
+  box-shadow: var(--glow-cyan);
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -.03em;
+}
+
+.brand-name span {
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--mono);
+  letter-spacing: .02em;
+  transition: all .2s;
+}
+
+.chip-cyan {
+  border: 1px solid rgba(0,229,212,.3);
+  background: var(--cyan-faint);
+  color: var(--cyan);
+}
+
+.chip-purple {
+  border: 1px solid rgba(167,139,250,.3);
+  background: var(--purple-faint);
+  color: var(--purple);
+}
+
+.chip i { font-size: 9px; }
+
+/* ── BODY GRID ──────────────────────────── */
+.body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: calc(100vh - 54px);
+  overflow: hidden;
+}
+
+/* ── LEFT ───────────────────────────────── */
+.left {
+  background: var(--bg-2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── RIGHT ──────────────────────────────── */
+.right {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Decorative grid lines on right panel */
+.right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ════════════════════════════════════════════
+   SECTION
+════════════════════════════════════════════ */
+.section {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.section:last-child { border-bottom: none; }
+
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--white-3);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title i {
+  color: var(--cyan);
+  font-size: 10px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-2), transparent);
+}
+
+/* ════════════════════════════════════════════
+   ALGO SELECTOR
+════════════════════════════════════════════ */
+.algo-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.algo-btn {
+  position: relative;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  background: var(--bg-3);
+  cursor: pointer;
+  text-align: left;
+  transition: all .22s cubic-bezier(.34,1.4,.64,1);
+  color: var(--white);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+.algo-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--cyan-faint), transparent);
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.algo-btn:hover { border-color: var(--border-3); transform: translateY(-1px); }
+.algo-btn:hover::before { opacity: 1; }
+
+.algo-btn.active {
+  border-color: var(--cyan);
+  background: var(--bg-4);
+  box-shadow: 0 0 0 2px var(--cyan-glow), inset 0 0 30px var(--cyan-faint);
+}
+
+.algo-btn.active::before { opacity: 1; }
+
+.check {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 17px; height: 17px;
+  background: var(--cyan);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  color: var(--bg);
+  font-weight: 800;
+  opacity: 0;
+  transform: scale(.3) rotate(-90deg);
+  transition: all .25s cubic-bezier(.34,1.4,.64,1);
+}
+
+.algo-btn.active .check { opacity: 1; transform: scale(1) rotate(0deg); }
+
+.algo-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  font-family: var(--mono);
+  letter-spacing: -.02em;
+  margin-bottom: 1px;
+}
+
+.algo-btn.active .algo-name { color: var(--cyan); }
+
+.algo-full {
+  font-size: 10px;
+  color: var(--white-4);
+  line-height: 1.3;
+}
+
+.algo-desc-box {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  padding: 10px 13px;
+  font-size: 12px;
+  color: var(--white-3);
+  line-height: 1.6;
+}
+
+.algo-desc-box b { color: var(--cyan); font-weight: 600; }
+
+/* ════════════════════════════════════════════
+   ENTRADA DE DATOS
+════════════════════════════════════════════ */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--white-4);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  padding: 13px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 16px;
+  outline: none;
+  transition: all .18s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  min-width: 0;
+}
+
+.field input::placeholder { color: var(--white-5); }
+
+.field input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px var(--cyan-glow);
+  background: var(--bg-4);
+}
+
+.btn-add {
+  padding: 13px 20px;
+  background: linear-gradient(135deg, var(--cyan) 0%, #00b8d4 100%);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--r-md);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  box-shadow: 0 4px 14px var(--cyan-glow);
+  margin-top: 0;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,229,212,.35);
+}
+
+.btn-add:active { transform: translateY(0); }
+
+/* File drop */
+.file-drop {
+  border: 1px dashed var(--border-3);
+  border-radius: var(--r-md);
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-3);
+  transition: all .2s;
+  display: block;
+}
+
+.file-drop:hover {
+  border-color: var(--cyan);
+  background: var(--cyan-faint);
+}
+
+.file-drop i { color: var(--cyan); margin-bottom: 3px; font-size: 16px; display: block; }
+.file-drop strong { font-size: 12px; color: var(--white-2); display: block; margin-bottom: 2px; }
+.file-drop span { font-size: 11px; color: var(--white-4); }
+.file-drop code {
+  background: rgba(0,229,212,.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+/* ════════════════════════════════════════════
+   TABLA DE PROCESOS
+════════════════════════════════════════════ */
+.proc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.proc-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white-4);
+  font-family: var(--mono);
+}
+
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  color: var(--white-4);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all .18s;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.btn-ghost:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: rgba(248,113,113,.06);
+}
+
+.empty-proc {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--white-5);
+}
+
+.empty-proc p { font-size: 12px; font-weight: 600; color: var(--white-4); margin-bottom: 3px; }
+.empty-proc span { font-size: 11px; }
+
+.proc-table-wrap {
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.proc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.proc-table th {
+  background: var(--bg-4);
+  padding: 7px 11px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--white-4);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  border-bottom: 1px solid var(--border);
+}
+
+.proc-table td {
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--border);
+  color: var(--white-2);
+  vertical-align: middle;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.proc-table tr:last-child td { border-bottom: none; }
+.proc-table tr:hover td { background: var(--bg-4); }
+
+.p-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 7px;
+  vertical-align: middle;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.p-name { font-family: var(--mono); font-weight: 600; color: var(--white); }
+
+.del-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(248,113,113,.08);
+  color: var(--red);
+  font-size: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .18s;
+  opacity: .5;
+}
+
+.del-btn:hover { background: var(--red); color: #fff; opacity: 1; transform: scale(1.1); }
+
+/* ════════════════════════════════════════════
+   CONTROLES
+════════════════════════════════════════════ */
+.sim-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-run {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, var(--cyan) 0%, #00b0d0 100%);
+  color: var(--bg);
+  border: none;
+  border-radius: 99px;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all .2s;
+  box-shadow: 0 4px 18px var(--cyan-glow);
+}
+
+.btn-run:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(0,229,212,.4);
+}
+
+.btn-run i { font-size: 10px; }
+
+.btn-sec {
+  padding: 10px 16px;
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  border-radius: 99px;
+  color: var(--white-3);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: all .18s;
+}
+
+.btn-sec:hover { background: var(--bg-5); border-color: var(--border-3); }
+.btn-sec.btn-pause-active { border-color: var(--cyan); color: var(--cyan); }
+
+.speed-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--white-4);
+  margin-left: auto;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 64px;
+  height: 3px;
+  background: var(--bg-5);
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
+
+.speed-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  min-width: 22px;
+}
+
+/* ════════════════════════════════════════════
+   RIGHT — GANTT HEADER
+════════════════════════════════════════════ */
+.right-header {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(11,21,41,.6);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.right-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  display: flex; align-items: center; gap: 8px;
+  letter-spacing: -.01em;
+}
+
+.right-title i { color: var(--cyan); }
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  color: var(--white-4);
+  transition: all .3s;
+  font-family: var(--mono);
+}
+
+.status-pill.running {
+  background: var(--cyan-faint);
+  border-color: rgba(0,229,212,.4);
+  color: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+.status-pill.done {
+  background: rgba(52,211,153,.08);
+  border-color: rgba(52,211,153,.4);
+  color: var(--emerald);
+}
+
+.s-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--white-5);
+  transition: background .3s;
+  flex-shrink: 0;
+}
+
+.status-pill.running .s-dot {
+  background: var(--cyan);
+  animation: pulse 1.2s infinite;
+}
+
+.status-pill.done .s-dot { background: var(--emerald); }
+
+@keyframes pulse {
+  0%,100% { opacity:1; box-shadow: 0 0 0 0 var(--cyan-glow); }
+  50% { opacity:.5; box-shadow: 0 0 0 4px transparent; }
+}
+
+/* ════════════════════════════════════════════
+   GANTT CANVAS
+════════════════════════════════════════════ */
+.gantt-area {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.gantt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 14px;
+  color: var(--white-4);
+}
+
+.gantt-empty svg { opacity: .35; }
+.gantt-empty p { font-size: 14px; font-weight: 600; color: var(--white-3); }
+.gantt-empty span { font-size: 12px; color: var(--white-4); }
+
+#gantt-wrap { min-width: 500px; }
+
+.g-row {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  margin-bottom: 8px;
+  overflow: visible;
+}
+
+.g-label {
+  width: 60px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  padding-right: 14px;
+  color: var(--white-3);
+}
+
+.g-track {
+  flex: 1;
+  position: relative;
+  height: 50px;
+}
+
+.g-track-bg {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  height: 26px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.g-vlines {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  height: 26px;
+  pointer-events: none;
+}
+
+.g-bar {
+  position: absolute;
+  top: 10px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg);
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width .45s cubic-bezier(.34,1.4,.64,1);
+  cursor: default;
+  z-index: 2;
+}
+
+.g-bar:hover { transform: scaleY(1.15); z-index: 10; filter: brightness(1.2); }
+
+.g-cursor {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: rgba(0,229,212,.7);
+  border-radius: 1px;
+  z-index: 5;
+  opacity: 0;
+  transition: left .28s ease, opacity .18s;
+  pointer-events: none;
+}
+
+.g-cursor::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.g-ticks {
+  position: relative;
+  height: 20px;
+  border-top: 1px solid var(--border-2);
+  margin-left: 62px;
+  margin-top: 6px;
+}
+
+.g-tick {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--white-4);
+  font-weight: 700;
+  transform: translateX(-50%);
+  top: 2px;
+}
+
+/* ════════════════════════════════════════════
+   RESULTADOS
+════════════════════════════════════════════ */
+.results-area {
+  border-top: 1px solid var(--border);
+  background: rgba(11,21,41,.8);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 270px;
+  display: none;
+  position: relative;
+  z-index: 2;
+}
+
+.results-area.visible { display: block; }
+
+.results-header {
+  padding: 13px 22px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.results-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--white);
+  display: flex; align-items: center; gap: 8px;
+  letter-spacing: -.01em;
+}
+
+.results-title i { color: var(--cyan); }
+
+.metrics-row {
+  display: flex;
+  gap: 12px;
+  padding: 14px 22px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.metric-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 10px 16px;
+  text-align: center;
+  flex-shrink: 0;
+  min-width: 95px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.metric-card:hover { transform: translateY(-2px); }
+
+.metric-card.c-teal::before  { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.metric-card.c-blue::before  { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+.metric-card.c-em::before    { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+.metric-card.c-amb::before   { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+.m-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-card.c-teal .m-val { color: var(--cyan); }
+.metric-card.c-blue .m-val { color: var(--blue); }
+.metric-card.c-em   .m-val { color: var(--emerald); }
+.metric-card.c-amb  .m-val { color: var(--amber); }
+
+.m-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--white-4);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.res-table-wrap {
+  padding: 0 22px 14px;
+  overflow-x: auto;
+}
+
+.res-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.res-table th {
+  background: var(--bg-3);
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--white-4);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+}
+
+.res-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--white-2);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.res-table tr:last-child td { border-bottom: none; }
+.res-table tr:hover td { background: var(--bg-4); }
+
+.td-tat { color: var(--cyan); font-weight: 700; }
+.td-wt  { color: var(--purple); font-weight: 700; }
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  padding: 10px 16px;
+  border-radius: var(--r-lg);
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  animation: toastIn .3s cubic-bezier(.34,1.4,.64,1);
+  max-width: 300px;
+  backdrop-filter: blur(20px);
+}
+
+@keyframes toastIn {
+  from { transform: translateY(20px) scale(.9); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.toast.ok   { background: rgba(0,229,212,.12); border: 1px solid rgba(0,229,212,.3); color: var(--cyan); }
+.toast.warn { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: var(--amber); }
+.toast.err  { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+
+/* ════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  html, body { overflow: auto; }
+  .app { height: auto; }
+  .body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; overflow: auto; }
+  .left { max-height: none; border-right: none; border-bottom: 1px solid var(--border); overflow: visible; }
+  .right { height: 60vh; }
+}
+
+@media (max-width: 520px) {
+  .input-grid { grid-template-columns: 1fr 1fr; }
+  .input-grid .field:first-child { grid-column: span 2; }
+  .btn-add { grid-column: span 2; justify-content: center; }
+}
+</style>
 </head>
 <body>
+<div class="app">
 
-  <!-- HEADER -->
-  <header class="hero">
-    <div class="hero-blobs">
-      <div class="blob blob1"></div>
-      <div class="blob blob2"></div>
-      <div class="blob blob3"></div>
+  <!-- ══ TOPBAR ══════════════════════════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa fa-microchip"></i></div>
+      <span class="brand-name">CPU <span>Proceso Dinámico</span></span>
     </div>
-    <div class="hero-content">
-      <div class="hero-icon">🌸</div>
-      <h1>CPU Scheduler</h1>
-      <p>Simulador de planificación de procesos · No expulsivo</p>
-      <div class="badge-row">
-        <span class="badge badge-pink">✨ FCFS</span>
-        <span class="badge badge-lavender">💜 SPN</span>
-        <span class="badge badge-mint">🎯 Gantt en tiempo real</span>
+    <div class="topbar-chips">
+      <div class="chip chip-cyan">
+        <i class="fa fa-circle-dot"></i>
+        <span id="chip-algo">FCFS</span>
+      </div>
+      <div class="chip chip-purple">
+        <i class="fa fa-layer-group"></i>
+        <span id="chip-count">0 procesos</span>
       </div>
     </div>
   </header>
 
-  <main class="container">
+  <!-- ══ BODY ════════════════════════════════ -->
+  <div class="body">
 
-    <!-- CARD: ALGORITMO -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">🎀</span>
-        <h2>Política de planificación</h2>
-      </div>
-      <div class="algo-select">
-        <button class="algo-btn active" id="btn-fcfs" onclick="selectAlgo('FCFS')">
-          <span class="algo-icon">🔵</span>
-          <div>
-            <strong>FCFS</strong>
-            <small>First Come First Served</small>
-          </div>
-        </button>
-        <button class="algo-btn" id="btn-spn" onclick="selectAlgo('SPN')">
-          <span class="algo-icon">💜</span>
-          <div>
-            <strong>SPN</strong>
-            <small>Shortest Process Next</small>
-          </div>
-        </button>
-      </div>
-      <div class="algo-desc" id="algo-desc">
-        <span class="desc-icon">💡</span>
-        <p><b>FCFS:</b> Los procesos se atienden en el orden en que llegan. ¡Simple y sin discriminación! Puede causar el efecto convoy si hay procesos muy largos.</p>
-      </div>
-    </div>
+    <!-- ══ LEFT ════════════════════════════ -->
+    <aside class="left">
 
-    <!-- CARD: AGREGAR PROCESO -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">➕</span>
-        <h2>Agregar proceso</h2>
-      </div>
-      <div class="input-grid">
-        <div class="input-group">
-          <label for="p-name"><i class="fa fa-tag"></i> Nombre</label>
-          <input type="text" id="p-name" placeholder="P1" maxlength="6"/>
-        </div>
-        <div class="input-group">
-          <label for="p-at"><i class="fa fa-clock"></i> Tiempo de llegada (AT)</label>
-          <input type="number" id="p-at" placeholder="0" min="0"/>
-        </div>
-        <div class="input-group">
-          <label for="p-bt"><i class="fa fa-bolt"></i> Ráfaga de CPU (BT)</label>
-          <input type="number" id="p-bt" placeholder="4" min="1"/>
-        </div>
-        <div class="input-group btn-align">
-          <button class="btn btn-primary" onclick="addProcess()">
-            <i class="fa fa-plus"></i> Agregar
+      <!-- ── ALGORITMO ──────────────────── -->
+      <div class="section">
+        <div class="section-title"><i class="fa fa-sliders"></i> Política de Planificación</div>
+
+        <div class="algo-row">
+          <button class="algo-btn active" id="btn-fcfs" onclick="selectAlgo('FCFS')">
+            <div class="check"><i class="fa fa-check"></i></div>
+            <div class="algo-name">FCFS</div>
+            <div class="algo-full">First Come First Served</div>
+          </button>
+          <button class="algo-btn" id="btn-spn" onclick="selectAlgo('SPN')">
+            <div class="check"><i class="fa fa-check"></i></div>
+            <div class="algo-name">SPN</div>
+            <div class="algo-full">Shortest Process Next</div>
           </button>
         </div>
+
+        <div class="algo-desc-box" id="algo-desc">
+          <b>FCFS:</b> Los procesos se atienden en el orden en que llegan. Simple y justo en llegada, pero puede generar el <em>efecto convoy</em> si un proceso largo bloquea al resto.
+        </div>
       </div>
 
-      <!-- ARCHIVO -->
-      <div class="divider"><span>o también puedes</span></div>
-      <div class="file-section">
-        <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+      <!-- ── ENTRADA DE DATOS ───────────── -->
+      <div class="section">
+        <div class="section-title"><i class="fa fa-plus-circle"></i> Agregar Proceso</div>
+
+        <div class="input-grid">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" id="p-name" placeholder="P1" maxlength="6" onkeydown="if(event.key==='Enter')addProcess()"/>
+          </div>
+          <div class="field">
+            <label>Llegada AT</label>
+            <input type="number" id="p-at" placeholder="0" min="0" onkeydown="if(event.key==='Enter')addProcess()"/>
+          </div>
+          <div class="field">
+            <label>Ráfaga BT</label>
+            <input type="number" id="p-bt" placeholder="4" min="1" onkeydown="if(event.key==='Enter')addProcess()"/>
+          </div>
+        </div>
+        <button class="btn-add" onclick="addProcess()" style="margin-bottom:10px"><i class="fa fa-plus"></i> Añadir Proceso</button>
+
+        <label class="file-drop" id="fileDrop" for="fileInput">
           <input type="file" accept=".txt,.csv" id="fileInput" onchange="loadFile(event)" style="display:none"/>
-          <div class="file-drop-content">
-            <span class="file-icon">📂</span>
-            <strong>Cargar archivo TXT / CSV</strong>
-            <p>Arrastra aquí o haz clic · Formato: <code>P1,0,5</code></p>
+          <i class="fa fa-cloud-arrow-up"></i>
+          <strong>Cargar TXT / CSV</strong>
+          <span>Formato: <code>P1,0,5</code> — una línea por proceso · arrastra aquí</span>
+        </label>
+      </div>
+
+      <!-- ── COLA DE PROCESOS ───────────── -->
+      <div class="section" style="flex:1">
+        <div class="proc-header">
+          <div class="section-title" style="margin:0;flex:1"><i class="fa fa-list"></i> Cola de Procesos</div>
+          <span class="proc-count" id="proc-count-lbl">0 procesos</span>
+          <button class="btn-ghost" onclick="clearAll()" style="margin-left:8px">
+            <i class="fa fa-trash"></i> Limpiar
+          </button>
+        </div>
+
+        <div id="empty-proc" class="empty-proc" style="margin-top:10px">
+          <p>Sin procesos aún</p>
+          <span>Agrega uno arriba o carga un archivo TXT/CSV</span>
+        </div>
+
+        <div id="table-wrap" style="display:none;margin-top:10px">
+          <div class="proc-table-wrap">
+            <table class="proc-table">
+              <thead>
+                <tr>
+                  <th>Proceso</th>
+                  <th>AT</th>
+                  <th>BT</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="proc-tbody"></tbody>
+            </table>
           </div>
         </div>
-        <div class="format-hint">
-          <span>📋</span>
-          <div>
-            <b>Formato del archivo:</b> una línea por proceso<br/>
-            <code>NombreProceso, TiempoLlegada, RáfagaCPU</code><br/>
-            <code>P1,0,5 &nbsp; P2,2,3 &nbsp; P3,4,8</code>
+      </div>
+
+      <!-- ── CONTROLES ──────────────────── -->
+      <div class="section">
+        <div class="sim-bar">
+          <button class="btn-run" onclick="runSimulation()">
+            <i class="fa fa-play"></i> Simular
+          </button>
+          <button class="btn-sec" id="pause-btn" onclick="togglePause()" style="display:none">
+            <i class="fa fa-pause" id="pause-icon"></i>
+            <span id="pause-text">Pausar</span>
+          </button>
+          <button class="btn-sec" id="reset-btn" onclick="resetSim()" style="display:none">
+            <i class="fa fa-rotate-left"></i> Reiniciar
+          </button>
+          <div class="speed-wrap">
+            <i class="fa fa-gauge" style="color:var(--cyan)"></i>
+            <input type="range" id="speed" min="1" max="5" value="3" oninput="updateSpeed()"/>
+            <span class="speed-val" id="speed-val">×3</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- CARD: COLA DE PROCESOS -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">📋</span>
-        <h2>Cola de procesos</h2>
-        <span class="process-count" id="process-count">0 procesos</span>
-      </div>
+    </aside>
 
-      <div id="empty-state" class="empty-state">
-        <div class="empty-icon">🌷</div>
-        <p>¡Aún no hay procesos!</p>
-        <small>Agrega uno arriba o carga un archivo para comenzar~</small>
-      </div>
+    <!-- ══ RIGHT ═══════════════════════════ -->
+    <div class="right">
 
-      <div id="table-wrap" style="display:none">
-        <table class="process-table">
-          <thead>
-            <tr>
-              <th>Proceso</th>
-              <th>Llegada (AT)</th>
-              <th>Ráfaga (BT)</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody id="process-tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="action-row">
-        <button class="btn btn-primary" id="sim-btn" onclick="runSimulation()">
-          <i class="fa fa-play"></i> Simular
-        </button>
-        <div class="speed-wrap">
-          <label><i class="fa fa-gauge"></i> Velocidad</label>
-          <input type="range" id="speed" min="1" max="5" value="3" oninput="updateSpeed()"/>
-          <span id="speed-label" class="speed-tag">×3</span>
+      <!-- Gantt header -->
+      <div class="right-header">
+        <div class="right-title">
+          <i class="fa fa-chart-gantt"></i>
+          Diagrama de Gantt — Tiempo real
         </div>
-        <button class="btn btn-outline" id="pause-btn" onclick="pauseResume()" style="display:none">
-          <i class="fa fa-pause" id="pause-icon"></i> <span id="pause-text">Pausar</span>
-        </button>
-        <button class="btn btn-ghost" id="reset-btn" onclick="resetSim()" style="display:none">
-          <i class="fa fa-stop"></i> Reiniciar
-        </button>
-        <button class="btn btn-danger" onclick="clearAll()">
-          <i class="fa fa-trash"></i> Limpiar
-        </button>
-      </div>
-    </div>
-
-    <!-- CARD: GANTT -->
-    <div class="card" id="gantt-panel" style="display:none">
-      <div class="card-header">
-        <span class="card-icon">🌈</span>
-        <h2>Diagrama de Gantt</h2>
         <div class="status-pill" id="status-pill">
-          <span class="status-dot" id="status-dot"></span>
-          <span id="status-text">Listo</span>
+          <div class="s-dot"></div>
+          <span id="status-txt">Esperando simulación</span>
         </div>
       </div>
-      <div id="gantt-scroll">
-        <div id="gantt-container"></div>
+
+      <!-- Gantt canvas -->
+      <div class="gantt-area" id="gantt-area">
+        <div class="gantt-empty" id="gantt-empty">
+          <svg width="110" height="80" viewBox="0 0 110 80" fill="none">
+            <rect x="16" y="14" width="78" height="12" rx="5" fill="rgba(0,229,212,.08)" stroke="rgba(0,229,212,.15)" stroke-width="1"/>
+            <rect x="16" y="32" width="78" height="12" rx="5" fill="rgba(167,139,250,.06)" stroke="rgba(167,139,250,.12)" stroke-width="1"/>
+            <rect x="16" y="50" width="78" height="12" rx="5" fill="rgba(96,165,250,.06)" stroke="rgba(96,165,250,.12)" stroke-width="1"/>
+            <rect x="20" y="17" width="30" height="6" rx="3" fill="rgba(0,229,212,.35)"/>
+            <rect x="20" y="35" width="18" height="6" rx="3" fill="rgba(167,139,250,.35)"/>
+            <rect x="20" y="53" width="42" height="6" rx="3" fill="rgba(96,165,250,.35)"/>
+          </svg>
+          <p>El diagrama aparecerá aquí</p>
+          <span>Agrega procesos y presiona <strong style="color:var(--cyan)">Simular</strong></span>
+        </div>
+        <div id="gantt-wrap" style="display:none"></div>
       </div>
-    </div>
 
-    <!-- CARD: RESULTADOS -->
-    <div class="card" id="results-panel" style="display:none">
-      <div class="card-header">
-        <span class="card-icon">📊</span>
-        <h2>Métricas de rendimiento</h2>
+      <!-- Results panel -->
+      <div class="results-area" id="results-area">
+        <div class="results-header">
+          <div class="results-title">
+            <i class="fa fa-table-list"></i>
+            Resultados y Métricas
+          </div>
+        </div>
+        <div class="metrics-row" id="metrics-row"></div>
+        <div class="res-table-wrap">
+          <table class="res-table">
+            <thead>
+              <tr>
+                <th>Proceso</th>
+                <th>AT</th>
+                <th>BT</th>
+                <th>Inicio</th>
+                <th>Fin (CT)</th>
+                <th>Retorno (TAT)</th>
+                <th>Espera (WT)</th>
+              </tr>
+            </thead>
+            <tbody id="res-tbody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="metrics-grid" id="avg-metrics"></div>
+    </div><!-- /right -->
+  </div><!-- /body -->
+</div><!-- /app -->
 
-      <h3 class="table-subtitle">📝 Resultados por proceso</h3>
-      <div class="table-wrap">
-        <table class="results-table">
-          <thead>
-            <tr>
-              <th>Proceso</th>
-              <th>AT</th>
-              <th>BT</th>
-              <th>Inicio</th>
-              <th>Fin (CT)</th>
-              <th>Retorno (TAT)</th>
-              <th>Espera (WT)</th>
-            </tr>
-          </thead>
-          <tbody id="results-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+<script>
+// ── ESTADO ───────────────────────────────────
+let processes = [];
+let algo      = 'FCFS';
+let schedule  = [];
+let metrics   = [];
+let stepIndex = 0;
+let simRunning= false;
+let simPaused = false;
+let simTimer  = null;
 
-  </main>
+const COLORS = [
+  '#00e5d4','#a78bfa','#60a5fa','#f472b6','#fbbf24',
+  '#34d399','#fb923c','#e879f9','#4ade80','#f87171'
+];
 
-  <footer class="footer">
-    <p>✨ CPU Scheduler · Planificación FCFS & SPN · Hecho con 💖</p>
-  </footer>
+// ── ALGORITMO ────────────────────────────────
+function selectAlgo(a) {
+  algo = a;
+  document.getElementById('btn-fcfs').classList.toggle('active', a==='FCFS');
+  document.getElementById('btn-spn').classList.toggle('active',  a==='SPN');
+  document.getElementById('chip-algo').textContent = a;
+  document.getElementById('algo-desc').innerHTML = a === 'FCFS'
+    ? '<b>FCFS:</b> Los procesos se atienden en el orden en que llegan. Simple y justo en llegada, pero puede generar el <em>efecto convoy</em> si un proceso largo bloquea al resto.'
+    : '<b>SPN:</b> Se ejecuta el proceso disponible con la menor ráfaga. Minimiza el tiempo de espera promedio, pero puede causar <em>inanición</em> en procesos largos.';
+  resetSim(true);
+}
 
-  <script src="js/app.js"></script>
+// ── PROCESOS ─────────────────────────────────
+function addProcess() {
+  const name = document.getElementById('p-name').value.trim() || `P${processes.length+1}`;
+  const at   = parseInt(document.getElementById('p-at').value) || 0;
+  const bt   = parseInt(document.getElementById('p-bt').value);
+  if (!bt || bt < 1) { toast('La ráfaga (BT) debe ser ≥ 1', 'warn'); return; }
+  if (processes.find(p => p.name === name)) { toast(`"${name}" ya existe`, 'warn'); return; }
+  processes.push({ name, at, bt });
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-at').value  = '';
+  document.getElementById('p-bt').value  = '';
+  document.getElementById('p-name').focus();
+  renderTable();
+  toast(`${name} agregado (AT=${at}, BT=${bt})`, 'ok');
+}
+
+function removeProcess(i) {
+  processes.splice(i, 1);
+  renderTable();
+}
+
+function clearAll() {
+  processes = [];
+  renderTable();
+  resetSim(true);
+}
+
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    let added = 0;
+    lines.forEach(line => {
+      const parts = line.split(/[,;\t ]+/);
+      if (parts.length >= 3) {
+        const name = parts[0].trim();
+        const at   = parseInt(parts[1]) || 0;
+        const bt   = parseInt(parts[2]);
+        if (bt && bt >= 1 && !processes.find(p=>p.name===name)) {
+          processes.push({ name, at, bt });
+          added++;
+        }
+      }
+    });
+    renderTable();
+    toast(`${added} proceso(s) cargado(s)`, added ? 'ok' : 'warn');
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// Drag & drop
+const fileDrop = document.getElementById('fileDrop');
+fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.style.borderColor='var(--cyan)'; });
+fileDrop.addEventListener('dragleave', () => { fileDrop.style.borderColor=''; });
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  loadFile({ target: { files: [file], value: '' } });
+});
+
+// ── RENDER TABLA ─────────────────────────────
+function renderTable() {
+  const n = processes.length;
+  document.getElementById('proc-count-lbl').textContent = n === 1 ? '1 proceso' : `${n} procesos`;
+  document.getElementById('chip-count').textContent     = n === 1 ? '1 proceso' : `${n} procesos`;
+  document.getElementById('empty-proc').style.display   = n ? 'none' : '';
+  document.getElementById('table-wrap').style.display   = n ? '' : 'none';
+
+  document.getElementById('proc-tbody').innerHTML = processes.map((p, i) => {
+    const c = COLORS[i % COLORS.length];
+    return `<tr>
+      <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${p.name}</span></td>
+      <td>${p.at}</td>
+      <td>${p.bt}</td>
+      <td><button class="del-btn" onclick="removeProcess(${i})" title="Eliminar"><i class="fa fa-xmark"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ ALGORITMOS ══════════════════════════════
+
+function computeFCFS(procs) {
+  const sorted = [...procs].sort((a,b) => a.at !== b.at ? a.at-b.at : procs.indexOf(a)-procs.indexOf(b));
+  const sched = []; let t = 0;
+  for (const p of sorted) {
+    if (t < p.at) t = p.at;
+    sched.push({ name: p.name, start: t, end: t + p.bt });
+    t += p.bt;
+  }
+  return sched;
+}
+
+function computeSPN(procs) {
+  const ps = procs.map(p => ({ ...p, done: false }));
+  const sched = []; let t = 0; let done = 0;
+  while (done < ps.length) {
+    const avail = ps.filter(p => !p.done && p.at <= t);
+    if (!avail.length) { t = Math.min(...ps.filter(p=>!p.done).map(p=>p.at)); continue; }
+    const chosen = avail.reduce((a,b) => a.bt < b.bt ? a : a.bt === b.bt && a.at <= b.at ? a : b);
+    sched.push({ name: chosen.name, start: t, end: t + chosen.bt });
+    t += chosen.bt;
+    chosen.done = true;
+    done++;
+  }
+  return sched;
+}
+
+function buildMetrics(procs, sched) {
+  return procs.map(p => {
+    const s = sched.find(x => x.name === p.name);
+    const tat = s.end - p.at;
+    const wt  = tat - p.bt;
+    return { name: p.name, at: p.at, bt: p.bt, start: s.start, ct: s.end, tat, wt };
+  });
+}
+
+// ══ SIMULACIÓN ══════════════════════════════
+
+function runSimulation() {
+  if (!processes.length) { toast('Agrega al menos un proceso primero', 'warn'); return; }
+  resetSim(true);
+
+  schedule = algo === 'FCFS' ? computeFCFS(processes) : computeSPN(processes);
+  metrics  = buildMetrics(processes, schedule);
+
+  const totalTime = Math.max(...schedule.map(s => s.end));
+  stepIndex  = 0;
+  simRunning = true;
+  simPaused  = false;
+
+  document.getElementById('gantt-empty').style.display = 'none';
+  document.getElementById('gantt-wrap').style.display  = '';
+  document.getElementById('pause-btn').style.display   = '';
+  document.getElementById('reset-btn').style.display   = '';
+  document.getElementById('results-area').classList.remove('visible');
+
+  initGantt(totalTime);
+  setStatus('running', `Simulando ${algo}…`);
+  animateStep(totalTime);
+}
+
+function initGantt(totalTime) {
+  // Fixed px per time unit — chart grows with scroll, never compresses
+  const unit = 52;
+  const W    = totalTime * unit;
+  const procOrder= [...new Set(schedule.map(s => s.name))];
+
+  window._gUnit  = unit;
+  window._gOrder = procOrder;
+  window._gW     = W;
+
+  let html = '';
+
+  procOrder.forEach(name => {
+    const pi = processes.findIndex(p => p.name === name);
+    const c  = COLORS[pi % COLORS.length];
+    html += `
+      <div class="g-row">
+        <div class="g-label" style="color:${c}">${name}</div>
+        <div class="g-track" style="width:${W}px;min-width:${W}px">
+          <div class="g-track-bg" style="width:${W}px"></div>
+          <div class="g-vlines" style="width:${W}px;background: repeating-linear-gradient(to right, transparent 0px, transparent ${unit-1}px, rgba(255,255,255,.04) ${unit-1}px, rgba(255,255,255,.04) ${unit}px);"></div>
+        </div>
+      </div>`;
+  });
+
+  const ROW_H = 60; // must match .g-row height(52) + margin-bottom(8)
+  window._gRowH = ROW_H;
+  html += `<div id="g-abs" style="position:absolute;top:0;left:62px;pointer-events:none;width:${W}px;height:${procOrder.length*ROW_H}px">`;
+  html += `<div class="g-cursor" id="g-cursor"></div>`;
+  html += `</div>`;
+
+  const tickStep = 1; // always show every number — 52px per unit gives plenty of room
+  let ticks = `<div class="g-ticks" style="width:${W}px">`;
+  for (let t = 0; t <= totalTime; t++) {
+    if (t % tickStep === 0 || t === totalTime) {
+      ticks += `<span class="g-tick" style="left:${t*unit}px">${t}</span>`;
+    }
+  }
+  ticks += '</div>';
+
+  document.getElementById('gantt-wrap').innerHTML =
+    `<div style="position:relative">${html}</div>${ticks}`;
+}
+
+function animateStep(totalTime) {
+  if (!simRunning) return;
+  if (simPaused) { simTimer = setTimeout(() => animateStep(totalTime), 100); return; }
+  if (stepIndex >= schedule.length) { finishSim(); return; }
+
+  const step  = schedule[stepIndex];
+  const unit  = window._gUnit;
+  const order = window._gOrder;
+
+  const pi    = processes.findIndex(p => p.name === step.name);
+  const c     = COLORS[pi % COLORS.length];
+  const ri    = order.indexOf(step.name);
+
+  const absArea = document.getElementById('g-abs');
+  if (!absArea) { finishSim(); return; }
+
+  const ROW_H = window._gRowH || 60;
+  const BAR_TOP = 10; // matches .g-track-bg top: 10px
+  const top   = ri * ROW_H + BAR_TOP;
+  const left  = step.start * unit;
+  const width = (step.end - step.start) * unit;
+
+  const bar = document.createElement('div');
+  bar.className = 'g-bar';
+  bar.style.cssText = `top:${top}px;left:${left}px;background:${c};box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 16px ${c}55, inset 0 1px 0 rgba(255,255,255,.25);`;
+  bar.title = `${step.name} | t=${step.start}→${step.end} | BT=${step.end-step.start}`;
+  absArea.appendChild(bar);
+
+  const cursor = document.getElementById('g-cursor');
+  if (cursor) {
+    cursor.style.opacity = '1';
+    cursor.style.left    = (step.start * unit) + 'px';
+  }
+
+  setStatus('running', `Ejecutando ${step.name} · t = ${step.start} → ${step.end}`);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.width = width + 'px';
+    setTimeout(() => {
+      if (width > 24) bar.textContent = step.name;
+      if (cursor) cursor.style.left = (step.end * unit) + 'px';
+    }, 380);
+  }));
+
+  stepIndex++;
+  const speed = parseInt(document.getElementById('speed').value);
+  const delay = Math.max(120, 1500 - speed * 240);
+  simTimer = setTimeout(() => animateStep(totalTime), delay);
+}
+
+function finishSim() {
+  simRunning = false;
+  document.getElementById('pause-btn').style.display = 'none';
+  const cursor = document.getElementById('g-cursor');
+  if (cursor) cursor.style.opacity = '0';
+  setStatus('done', '¡Simulación completada!');
+  renderResults();
+}
+
+function renderResults() {
+  const n      = metrics.length;
+  const avgTAT = (metrics.reduce((s,m)=>s+m.tat,0)/n).toFixed(2);
+  const avgWT  = (metrics.reduce((s,m)=>s+m.wt, 0)/n).toFixed(2);
+  const totalT = Math.max(...schedule.map(s=>s.end));
+  const totalBT= processes.reduce((s,p)=>s+p.bt,0);
+  const cpuUse = ((totalBT/totalT)*100).toFixed(1);
+
+  document.getElementById('metrics-row').innerHTML = `
+    <div class="metric-card c-teal"><div class="m-val">${avgTAT}</div><div class="m-lbl">TAT Promedio</div></div>
+    <div class="metric-card c-blue"><div class="m-val">${avgWT}</div><div class="m-lbl">Espera Prom.</div></div>
+    <div class="metric-card c-em"><div class="m-val">${cpuUse}%</div><div class="m-lbl">Uso CPU</div></div>
+    <div class="metric-card c-amb"><div class="m-val">${n}</div><div class="m-lbl">Procesos</div></div>`;
+
+  document.getElementById('res-tbody').innerHTML = metrics.map((m,i) => {
+    const c = COLORS[i % COLORS.length];
+    return `<tr>
+      <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${m.name}</span></td>
+      <td>${m.at}</td><td>${m.bt}</td><td>${m.start}</td><td>${m.ct}</td>
+      <td class="td-tat">${m.tat}</td>
+      <td class="td-wt">${m.wt}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('results-area').classList.add('visible');
+}
+
+function togglePause() {
+  simPaused = !simPaused;
+  document.getElementById('pause-icon').className = simPaused ? 'fa fa-play' : 'fa fa-pause';
+  document.getElementById('pause-text').textContent = simPaused ? 'Reanudar' : 'Pausar';
+  document.getElementById('pause-btn').classList.toggle('btn-pause-active', simPaused);
+  setStatus(simPaused ? 'idle' : 'running', simPaused ? 'Pausado' : 'Simulando…');
+}
+
+function resetSim(silent = false) {
+  clearTimeout(simTimer);
+  simRunning = simPaused = false;
+  stepIndex  = 0;
+  schedule   = [];
+  metrics    = [];
+  document.getElementById('pause-btn').style.display   = 'none';
+  document.getElementById('reset-btn').style.display   = 'none';
+  document.getElementById('gantt-wrap').style.display  = 'none';
+  document.getElementById('gantt-empty').style.display = '';
+  document.getElementById('results-area').classList.remove('visible');
+  document.getElementById('gantt-wrap').innerHTML = '';
+  if (!silent) setStatus('idle', 'Esperando simulación');
+}
+
+function updateSpeed() {
+  document.getElementById('speed-val').textContent = '×' + document.getElementById('speed').value;
+}
+
+function setStatus(state, txt) {
+  const pill = document.getElementById('status-pill');
+  const span = document.getElementById('status-txt');
+  if (!pill||!span) return;
+  span.textContent = txt;
+  pill.className = 'status-pill' + (state==='running'?' running':state==='done'?' done':'');
+}
+
+function toast(msg, type='ok') {
+  const old = document.getElementById('_toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.id = '_toast';
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+renderTable();
+</script>
 </body>
 </html>

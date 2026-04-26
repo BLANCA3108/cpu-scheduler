@@ -1,0 +1,8 @@
+# Archivo de ejemplo - CPU Scheduler
+# Formato: Nombre, Tiempo de llegada, Rafaga CPU
+P1,0,5
+P2,2,3
+P3,4,8
+P4,5,1
+P5,6,4
+P6,9,2

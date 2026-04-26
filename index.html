@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CPU Scheduler ✨</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="hero">
+    <div class="hero-blobs">
+      <div class="blob blob1"></div>
+      <div class="blob blob2"></div>
+      <div class="blob blob3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-icon">🌸</div>
+      <h1>CPU Scheduler</h1>
+      <p>Simulador de planificación de procesos · No expulsivo</p>
+      <div class="badge-row">
+        <span class="badge badge-pink">✨ FCFS</span>
+        <span class="badge badge-lavender">💜 SPN</span>
+        <span class="badge badge-mint">🎯 Gantt en tiempo real</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- CARD: ALGORITMO -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🎀</span>
+        <h2>Política de planificación</h2>
+      </div>
+      <div class="algo-select">
+        <button class="algo-btn active" id="btn-fcfs" onclick="selectAlgo('FCFS')">
+          <span class="algo-icon">🔵</span>
+          <div>
+            <strong>FCFS</strong>
+            <small>First Come First Served</small>
+          </div>
+        </button>
+        <button class="algo-btn" id="btn-spn" onclick="selectAlgo('SPN')">
+          <span class="algo-icon">💜</span>
+          <div>
+            <strong>SPN</strong>
+            <small>Shortest Process Next</small>
+          </div>
+        </button>
+      </div>
+      <div class="algo-desc" id="algo-desc">
+        <span class="desc-icon">💡</span>
+        <p><b>FCFS:</b> Los procesos se atienden en el orden en que llegan. ¡Simple y sin discriminación! Puede causar el efecto convoy si hay procesos muy largos.</p>
+      </div>
+    </div>
+
+    <!-- CARD: AGREGAR PROCESO -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">➕</span>
+        <h2>Agregar proceso</h2>
+      </div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="p-name"><i class="fa fa-tag"></i> Nombre</label>
+          <input type="text" id="p-name" placeholder="P1" maxlength="6"/>
+        </div>
+        <div class="input-group">
+          <label for="p-at"><i class="fa fa-clock"></i> Tiempo de llegada (AT)</label>
+          <input type="number" id="p-at" placeholder="0" min="0"/>
+        </div>
+        <div class="input-group">
+          <label for="p-bt"><i class="fa fa-bolt"></i> Ráfaga de CPU (BT)</label>
+          <input type="number" id="p-bt" placeholder="4" min="1"/>
+        </div>
+        <div class="input-group btn-align">
+          <button class="btn btn-primary" onclick="addProcess()">
+            <i class="fa fa-plus"></i> Agregar
+          </button>
+        </div>
+      </div>
+
+      <!-- ARCHIVO -->
+      <div class="divider"><span>o también puedes</span></div>
+      <div class="file-section">
+        <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+          <input type="file" accept=".txt,.csv" id="fileInput" onchange="loadFile(event)" style="display:none"/>
+          <div class="file-drop-content">
+            <span class="file-icon">📂</span>
+            <strong>Cargar archivo TXT / CSV</strong>
+            <p>Arrastra aquí o haz clic · Formato: <code>P1,0,5</code></p>
+          </div>
+        </div>
+        <div class="format-hint">
+          <span>📋</span>
+          <div>
+            <b>Formato del archivo:</b> una línea por proceso<br/>
+            <code>NombreProceso, TiempoLlegada, RáfagaCPU</code><br/>
+            <code>P1,0,5 &nbsp; P2,2,3 &nbsp; P3,4,8</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD: COLA DE PROCESOS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📋</span>
+        <h2>Cola de procesos</h2>
+        <span class="process-count" id="process-count">0 procesos</span>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">🌷</div>
+        <p>¡Aún no hay procesos!</p>
+        <small>Agrega uno arriba o carga un archivo para comenzar~</small>
+      </div>
+
+      <div id="table-wrap" style="display:none">
+        <table class="process-table">
+          <thead>
+            <tr>
+              <th>Proceso</th>
+              <th>Llegada (AT)</th>
+              <th>Ráfaga (BT)</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+          <tbody id="process-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" id="sim-btn" onclick="runSimulation()">
+          <i class="fa fa-play"></i> Simular
+        </button>
+        <div class="speed-wrap">
+          <label><i class="fa fa-gauge"></i> Velocidad</label>
+          <input type="range" id="speed" min="1" max="5" value="3" oninput="updateSpeed()"/>
+          <span id="speed-label" class="speed-tag">×3</span>
+        </div>
+        <button class="btn btn-outline" id="pause-btn" onclick="pauseResume()" style="display:none">
+          <i class="fa fa-pause" id="pause-icon"></i> <span id="pause-text">Pausar</span>
+        </button>
+        <button class="btn btn-ghost" id="reset-btn" onclick="resetSim()" style="display:none">
+          <i class="fa fa-stop"></i> Reiniciar
+        </button>
+        <button class="btn btn-danger" onclick="clearAll()">
+          <i class="fa fa-trash"></i> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- CARD: GANTT -->
+    <div class="card" id="gantt-panel" style="display:none">
+      <div class="card-header">
+        <span class="card-icon">🌈</span>
+        <h2>Diagrama de Gantt</h2>
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Listo</span>
+        </div>
+      </div>
+      <div id="gantt-scroll">
+        <div id="gantt-container"></div>
+      </div>
+    </div>
+
+    <!-- CARD: RESULTADOS -->
+    <div class="card" id="results-panel" style="display:none">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <h2>Métricas de rendimiento</h2>
+      </div>
+
+      <div class="metrics-grid" id="avg-metrics"></div>
+
+      <h3 class="table-subtitle">📝 Resultados por proceso</h3>
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Proceso</th>
+              <th>AT</th>
+              <th>BT</th>
+              <th>Inicio</th>
+              <th>Fin (CT)</th>
+              <th>Retorno (TAT)</th>
+              <th>Espera (WT)</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <p>✨ CPU Scheduler · Planificación FCFS & SPN · Hecho con 💖</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

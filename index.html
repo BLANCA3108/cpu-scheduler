@@ -853,6 +853,11 @@ input[type=range]::-webkit-slider-thumb {
   top: 2px;
 }
 
+.g-tick-major {
+  color: var(--cyan);
+  font-size: 11px;
+}
+
 /* ════════════════════════════════════════════
    RESULTADOS
 ════════════════════════════════════════════ */
@@ -1398,8 +1403,13 @@ function runSimulation() {
 }
 
 function initGantt(totalTime) {
-  // Fixed px per time unit — chart grows with scroll, never compresses
-  const unit = 52;
+  // Unidad adaptativa: a más tiempo total, más pequeña la unidad para no agrandar infinito
+  // Hasta 50 → 52px | 51-100 → 32px | 101-300 → 18px | 301-600 → 10px | 600+ → 6px
+  const unit = totalTime <= 50  ? 52
+             : totalTime <= 100 ? 32
+             : totalTime <= 300 ? 18
+             : totalTime <= 600 ? 10
+             : 6;
   const W    = totalTime * unit;
   const procOrder= [...new Set(schedule.map(s => s.name))];
 
@@ -1428,11 +1438,14 @@ function initGantt(totalTime) {
   html += `<div class="g-cursor" id="g-cursor"></div>`;
   html += `</div>`;
 
-  const tickStep = 1; // always show every number — 52px per unit gives plenty of room
+  // Adaptive tick step: every number up to 99, every 5 from 100–499, every 10 from 500+
+  const tickStep = totalTime < 100 ? 1 : totalTime < 500 ? 5 : 10;
   let ticks = `<div class="g-ticks" style="width:${W}px">`;
   for (let t = 0; t <= totalTime; t++) {
     if (t % tickStep === 0 || t === totalTime) {
-      ticks += `<span class="g-tick" style="left:${t*unit}px">${t}</span>`;
+      // Highlight multiples of 10x the step for readability at large scales
+      const isMajor = tickStep > 1 && t % (tickStep * 2) === 0;
+      ticks += `<span class="g-tick${isMajor ? ' g-tick-major' : ''}" style="left:${t*unit}px">${t}</span>`;
     }
   }
   ticks += '</div>';

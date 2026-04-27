@@ -8,36 +8,36 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <style>
 :root {
-  --bg:        #060d1f;
-  --bg-2:      #0b1529;
-  --bg-3:      #0f1d35;
-  --bg-4:      #14243f;
-  --bg-5:      #192d4e;
+  --bg:        #f0faf8;
+  --bg-2:      #e4f5f1;
+  --bg-3:      #d4ede8;
+  --bg-4:      #c2e3dc;
+  --bg-5:      #aed8cf;
 
-  --cyan:      #00e5d4;
-  --cyan-dim:  #00b8aa;
-  --cyan-glow: rgba(0,229,212,.18);
-  --cyan-faint:rgba(0,229,212,.07);
+  --cyan:      #00897b;
+  --cyan-dim:  #00695c;
+  --cyan-glow: rgba(0,137,123,.18);
+  --cyan-faint:rgba(0,137,123,.07);
 
-  --purple:    #a78bfa;
-  --purple-dim:#7c3aed;
-  --purple-faint:rgba(167,139,250,.08);
+  --purple:    #26a69a;
+  --purple-dim:#00796b;
+  --purple-faint:rgba(38,166,154,.08);
 
-  --pink:      #f472b6;
-  --amber:     #fbbf24;
-  --emerald:   #34d399;
-  --red:       #f87171;
-  --blue:      #60a5fa;
+  --pink:      #4db6ac;
+  --amber:     #26a69a;
+  --emerald:   #00897b;
+  --red:       #ef5350;
+  --blue:      #26c6da;
 
-  --white:     #f0f6ff;
-  --white-2:   #c8d8ee;
-  --white-3:   #8fa8c8;
-  --white-4:   #4a6480;
-  --white-5:   #2a3f58;
+  --white:     #1a3a35;
+  --white-2:   #2d5a52;
+  --white-3:   #4a7a70;
+  --white-4:   #6b9990;
+  --white-5:   #9dbdb8;
 
-  --border:    rgba(255,255,255,.06);
-  --border-2:  rgba(255,255,255,.10);
-  --border-3:  rgba(255,255,255,.14);
+  --border:    rgba(0,137,123,.10);
+  --border-2:  rgba(0,137,123,.16);
+  --border-3:  rgba(0,137,123,.22);
 
   --r-sm: 6px;
   --r-md: 10px;
@@ -47,10 +47,10 @@
   --font: 'Space Grotesk', sans-serif;
   --mono: 'Fira Code', monospace;
 
-  --glow-cyan:   0 0 20px rgba(0,229,212,.25);
-  --glow-purple: 0 0 20px rgba(167,139,250,.25);
-  --shadow:      0 8px 32px rgba(0,0,0,.45);
-  --shadow-sm:   0 2px 12px rgba(0,0,0,.3);
+  --glow-cyan:   0 0 20px rgba(0,137,123,.20);
+  --glow-purple: 0 0 20px rgba(38,166,154,.20);
+  --shadow:      0 8px 32px rgba(0,137,123,.15);
+  --shadow-sm:   0 2px 12px rgba(0,137,123,.10);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,7 +83,7 @@ body::after {
   top: -200px; left: -200px;
   width: 600px; height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,229,212,.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0,137,123,.06) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -106,7 +106,7 @@ body::after {
 
 /* ── TOPBAR ─────────────────────────────── */
 .topbar {
-  background: rgba(11,21,41,.8);
+  background: rgba(224,245,241,.90);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-2);
@@ -127,10 +127,10 @@ body::after {
 
 .brand-icon {
   width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  background: linear-gradient(135deg, #00897b 0%, #26c6da 100%);
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: var(--bg);
+  font-size: 14px; color: #fff;
   flex-shrink: 0;
   box-shadow: var(--glow-cyan);
 }
@@ -143,7 +143,7 @@ body::after {
 }
 
 .brand-name span {
-  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  background: linear-gradient(90deg, #00897b, #26c6da);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -169,15 +169,15 @@ body::after {
 }
 
 .chip-cyan {
-  border: 1px solid rgba(0,229,212,.3);
-  background: var(--cyan-faint);
+  border: 1px solid rgba(0,137,123,.3);
+  background: rgba(0,137,123,.08);
   color: var(--cyan);
 }
 
 .chip-purple {
-  border: 1px solid rgba(167,139,250,.3);
-  background: var(--purple-faint);
-  color: var(--purple);
+  border: 1px solid rgba(38,198,188,.3);
+  background: rgba(38,198,188,.08);
+  color: #00796b;
 }
 
 .chip i { font-size: 9px; }
@@ -395,7 +395,7 @@ body::after {
 
 .btn-add {
   padding: 13px 20px;
-  background: linear-gradient(135deg, var(--cyan) 0%, #00b8d4 100%);
+  background: linear-gradient(135deg, #00897b 0%, #26c6da 100%);
   color: var(--bg);
   border: none;
   border-radius: var(--r-md);
@@ -572,7 +572,7 @@ body::after {
 
 .btn-run {
   padding: 10px 22px;
-  background: linear-gradient(135deg, var(--cyan) 0%, #00b0d0 100%);
+  background: linear-gradient(135deg, #00897b 0%, #26c6da 100%);
   color: var(--bg);
   border: none;
   border-radius: 99px;
@@ -651,7 +651,7 @@ input[type=range]::-webkit-slider-thumb {
 .right-header {
   padding: 14px 22px;
   border-bottom: 1px solid var(--border);
-  background: rgba(11,21,41,.6);
+  background: rgba(224,245,241,.80);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -725,7 +725,7 @@ input[type=range]::-webkit-slider-thumb {
 .gantt-area {
   flex: 1;
   overflow: auto;
-  padding: 24px;
+  padding: 14px 18px;
   position: relative;
   z-index: 1;
 }
@@ -749,8 +749,8 @@ input[type=range]::-webkit-slider-thumb {
 .g-row {
   display: flex;
   align-items: center;
-  height: 52px;
-  margin-bottom: 8px;
+  height: 38px;
+  margin-bottom: 6px;
   overflow: visible;
 }
 
@@ -758,7 +758,7 @@ input[type=range]::-webkit-slider-thumb {
   width: 60px;
   flex-shrink: 0;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   text-align: right;
   padding-right: 14px;
@@ -768,31 +768,31 @@ input[type=range]::-webkit-slider-thumb {
 .g-track {
   flex: 1;
   position: relative;
-  height: 50px;
+  height: 36px;
 }
 
 .g-track-bg {
   position: absolute;
-  top: 10px;
+  top: 6px;
   left: 0;
-  height: 26px;
+  height: 20px;
   background: var(--bg-3);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .g-vlines {
   position: absolute;
-  top: 10px;
+  top: 6px;
   left: 0;
-  height: 26px;
+  height: 20px;
   pointer-events: none;
 }
 
 .g-bar {
   position: absolute;
-  top: 10px;
-  height: 26px;
+  top: 6px;
+  height: 20px;
   border-radius: 7px;
   display: flex;
   align-items: center;
@@ -800,7 +800,7 @@ input[type=range]::-webkit-slider-thumb {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
-  color: var(--bg);
+  color: #fff;
   width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -816,7 +816,7 @@ input[type=range]::-webkit-slider-thumb {
   top: 0;
   height: 100%;
   width: 2px;
-  background: rgba(0,229,212,.7);
+  background: rgba(0,137,123,.7);
   border-radius: 1px;
   z-index: 5;
   opacity: 0;
@@ -863,7 +863,7 @@ input[type=range]::-webkit-slider-thumb {
 ════════════════════════════════════════════ */
 .results-area {
   border-top: 1px solid var(--border);
-  background: rgba(11,21,41,.8);
+  background: rgba(224,245,241,.90);
   backdrop-filter: blur(10px);
   flex-shrink: 0;
   overflow-y: auto;
@@ -987,7 +987,7 @@ input[type=range]::-webkit-slider-thumb {
 .res-table tr:hover td { background: var(--bg-4); }
 
 .td-tat { color: var(--cyan); font-weight: 700; }
-.td-wt  { color: var(--purple); font-weight: 700; }
+.td-wt  { color: #26c6da; font-weight: 700; }
 
 /* ════════════════════════════════════════════
    TOAST
@@ -1011,9 +1011,9 @@ input[type=range]::-webkit-slider-thumb {
   to   { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-.toast.ok   { background: rgba(0,229,212,.12); border: 1px solid rgba(0,229,212,.3); color: var(--cyan); }
-.toast.warn { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: var(--amber); }
-.toast.err  { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+.toast.ok   { background: rgba(0,137,123,.12); border: 1px solid rgba(0,137,123,.3); color: var(--cyan); }
+.toast.warn { background: rgba(38,166,154,.1); border: 1px solid rgba(38,166,154,.3); color: #00796b; }
+.toast.err  { background: rgba(239,83,80,.1); border: 1px solid rgba(239,83,80,.3); color: var(--red); }
 
 /* ════════════════════════════════════════════
    RESPONSIVE
@@ -1184,12 +1184,12 @@ input[type=range]::-webkit-slider-thumb {
       <div class="gantt-area" id="gantt-area">
         <div class="gantt-empty" id="gantt-empty">
           <svg width="110" height="80" viewBox="0 0 110 80" fill="none">
-            <rect x="16" y="14" width="78" height="12" rx="5" fill="rgba(0,229,212,.08)" stroke="rgba(0,229,212,.15)" stroke-width="1"/>
-            <rect x="16" y="32" width="78" height="12" rx="5" fill="rgba(167,139,250,.06)" stroke="rgba(167,139,250,.12)" stroke-width="1"/>
-            <rect x="16" y="50" width="78" height="12" rx="5" fill="rgba(96,165,250,.06)" stroke="rgba(96,165,250,.12)" stroke-width="1"/>
-            <rect x="20" y="17" width="30" height="6" rx="3" fill="rgba(0,229,212,.35)"/>
-            <rect x="20" y="35" width="18" height="6" rx="3" fill="rgba(167,139,250,.35)"/>
-            <rect x="20" y="53" width="42" height="6" rx="3" fill="rgba(96,165,250,.35)"/>
+            <rect x="16" y="14" width="78" height="12" rx="5" fill="rgba(0,137,123,.08)" stroke="rgba(0,137,123,.18)" stroke-width="1"/>
+            <rect x="16" y="32" width="78" height="12" rx="5" fill="rgba(38,198,188,.06)" stroke="rgba(38,198,188,.15)" stroke-width="1"/>
+            <rect x="16" y="50" width="78" height="12" rx="5" fill="rgba(38,188,212,.06)" stroke="rgba(38,188,212,.15)" stroke-width="1"/>
+            <rect x="20" y="17" width="30" height="6" rx="3" fill="rgba(0,137,123,.40)"/>
+            <rect x="20" y="35" width="18" height="6" rx="3" fill="rgba(38,198,188,.40)"/>
+            <rect x="20" y="53" width="42" height="6" rx="3" fill="rgba(38,188,212,.40)"/>
           </svg>
           <p>El diagrama aparecerá aquí</p>
           <span>Agrega procesos y presiona <strong style="color:var(--cyan)">Simular</strong></span>
@@ -1240,8 +1240,8 @@ let simPaused = false;
 let simTimer  = null;
 
 const COLORS = [
-  '#00e5d4','#a78bfa','#60a5fa','#f472b6','#fbbf24',
-  '#34d399','#fb923c','#e879f9','#4ade80','#f87171'
+  '#00897b','#26c6da','#4db6ac','#80cbc4','#00acc1',
+  '#26a69a','#00bcd4','#4dd0e1','#b2dfdb','#80deea'
 ];
 
 // ── ALGORITMO ────────────────────────────────
@@ -1405,11 +1405,11 @@ function runSimulation() {
 function initGantt(totalTime) {
   // Unidad adaptativa: a más tiempo total, más pequeña la unidad para no agrandar infinito
   // Hasta 50 → 52px | 51-100 → 32px | 101-300 → 18px | 301-600 → 10px | 600+ → 6px
-  const unit = totalTime <= 50  ? 52
-             : totalTime <= 100 ? 32
-             : totalTime <= 300 ? 18
-             : totalTime <= 600 ? 10
-             : 6;
+  const unit = totalTime <= 50  ? 38
+             : totalTime <= 100 ? 24
+             : totalTime <= 300 ? 14
+             : totalTime <= 600 ? 8
+             : 5;
   const W    = totalTime * unit;
   const procOrder= [...new Set(schedule.map(s => s.name))];
 
@@ -1427,12 +1427,12 @@ function initGantt(totalTime) {
         <div class="g-label" style="color:${c}">${name}</div>
         <div class="g-track" style="width:${W}px;min-width:${W}px">
           <div class="g-track-bg" style="width:${W}px"></div>
-          <div class="g-vlines" style="width:${W}px;background: repeating-linear-gradient(to right, transparent 0px, transparent ${unit-1}px, rgba(255,255,255,.04) ${unit-1}px, rgba(255,255,255,.04) ${unit}px);"></div>
+          <div class="g-vlines" style="width:${W}px;background: repeating-linear-gradient(to right, transparent 0px, transparent ${unit-1}px, rgba(0,137,123,.06) ${unit-1}px, rgba(0,137,123,.06) ${unit}px);"></div>
         </div>
       </div>`;
   });
 
-  const ROW_H = 60; // must match .g-row height(52) + margin-bottom(8)
+  const ROW_H = 44; // must match .g-row height(38) + margin-bottom(6)
   window._gRowH = ROW_H;
   html += `<div id="g-abs" style="position:absolute;top:0;left:62px;pointer-events:none;width:${W}px;height:${procOrder.length*ROW_H}px">`;
   html += `<div class="g-cursor" id="g-cursor"></div>`;
@@ -1471,7 +1471,7 @@ function animateStep(totalTime) {
   if (!absArea) { finishSim(); return; }
 
   const ROW_H = window._gRowH || 60;
-  const BAR_TOP = 10; // matches .g-track-bg top: 10px
+  const BAR_TOP = 6; // matches .g-track-bg top: 6px
   const top   = ri * ROW_H + BAR_TOP;
   const left  = step.start * unit;
   const width = (step.end - step.start) * unit;

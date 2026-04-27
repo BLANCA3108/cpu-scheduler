@@ -1092,11 +1092,11 @@ input[type=range]::-webkit-slider-thumb {
             <input type="text" id="p-name" placeholder="P1" maxlength="6" onkeydown="if(event.key==='Enter')addProcess()"/>
           </div>
           <div class="field">
-            <label>Llegada AT</label>
+            <label>T. Llegada</label>
             <input type="number" id="p-at" placeholder="0" min="0" onkeydown="if(event.key==='Enter')addProcess()"/>
           </div>
           <div class="field">
-            <label>Ráfaga BT</label>
+            <label>T. Ejecución</label>
             <input type="number" id="p-bt" placeholder="4" min="1" onkeydown="if(event.key==='Enter')addProcess()"/>
           </div>
         </div>
@@ -1131,8 +1131,8 @@ input[type=range]::-webkit-slider-thumb {
               <thead>
                 <tr>
                   <th>Proceso</th>
-                  <th>AT</th>
-                  <th>BT</th>
+                  <th>T. Llegada</th>
+                  <th>T. Ejecución</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1211,12 +1211,12 @@ input[type=range]::-webkit-slider-thumb {
             <thead>
               <tr>
                 <th>Proceso</th>
-                <th>AT</th>
-                <th>BT</th>
-                <th>Inicio</th>
-                <th>Fin (CT)</th>
-                <th>Retorno (TAT)</th>
-                <th>Espera (WT)</th>
+                <th>T. Llegada</th>
+                <th>T. Ejecución</th>
+                <th>T. Inicio</th>
+                <th>T. Finalización</th>
+                <th>T. Retorno</th>
+                <th>T. Espera</th>
               </tr>
             </thead>
             <tbody id="res-tbody"></tbody>
@@ -1261,7 +1261,7 @@ function addProcess() {
   const name = document.getElementById('p-name').value.trim() || `P${processes.length+1}`;
   const at   = parseInt(document.getElementById('p-at').value) || 0;
   const bt   = parseInt(document.getElementById('p-bt').value);
-  if (!bt || bt < 1) { toast('La ráfaga (BT) debe ser ≥ 1', 'warn'); return; }
+  if (!bt || bt < 1) { toast('El tiempo de ejecución debe ser ≥ 1', 'warn'); return; }
   if (processes.find(p => p.name === name)) { toast(`"${name}" ya existe`, 'warn'); return; }
   processes.push({ name, at, bt });
   document.getElementById('p-name').value = '';
@@ -1269,7 +1269,7 @@ function addProcess() {
   document.getElementById('p-bt').value  = '';
   document.getElementById('p-name').focus();
   renderTable();
-  toast(`${name} agregado (AT=${at}, BT=${bt})`, 'ok');
+  toast(`${name} agregado (Llegada=${at}, Ejecución=${bt})`, 'ok');
 }
 
 function removeProcess(i) {
@@ -1479,7 +1479,7 @@ function animateStep(totalTime) {
   const bar = document.createElement('div');
   bar.className = 'g-bar';
   bar.style.cssText = `top:${top}px;left:${left}px;background:${c};box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 16px ${c}55, inset 0 1px 0 rgba(255,255,255,.25);`;
-  bar.title = `${step.name} | t=${step.start}→${step.end} | BT=${step.end-step.start}`;
+  bar.title = `${step.name} | t=${step.start}→${step.end} | T.Ejecución=${step.end-step.start}`;
   absArea.appendChild(bar);
 
   const cursor = document.getElementById('g-cursor');
@@ -1522,8 +1522,8 @@ function renderResults() {
   const cpuUse = ((totalBT/totalT)*100).toFixed(1);
 
   document.getElementById('metrics-row').innerHTML = `
-    <div class="metric-card c-teal"><div class="m-val">${avgTAT}</div><div class="m-lbl">TAT Promedio</div></div>
-    <div class="metric-card c-blue"><div class="m-val">${avgWT}</div><div class="m-lbl">Espera Prom.</div></div>
+    <div class="metric-card c-teal"><div class="m-val">${avgTAT}</div><div class="m-lbl">T. Retorno Prom.</div></div>
+    <div class="metric-card c-blue"><div class="m-val">${avgWT}</div><div class="m-lbl">T. Espera Prom.</div></div>
     <div class="metric-card c-em"><div class="m-val">${cpuUse}%</div><div class="m-lbl">Uso CPU</div></div>
     <div class="metric-card c-amb"><div class="m-val">${n}</div><div class="m-lbl">Procesos</div></div>`;
 

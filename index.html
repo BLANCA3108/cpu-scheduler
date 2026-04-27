@@ -185,7 +185,7 @@ body::after {
 /* ── BODY GRID ──────────────────────────── */
 .body {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 380px 1fr;
   height: calc(100vh - 54px);
   overflow: hidden;
 }
@@ -649,7 +649,7 @@ input[type=range]::-webkit-slider-thumb {
    RIGHT — GANTT HEADER
 ════════════════════════════════════════════ */
 .right-header {
-  padding: 14px 22px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--border);
   background: rgba(224,245,241,.80);
   backdrop-filter: blur(10px);
@@ -657,9 +657,54 @@ input[type=range]::-webkit-slider-thumb {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
   position: relative;
   z-index: 2;
 }
+
+/* ── METRICS TOP BAR ──────────────────────── */
+.metrics-top {
+  display: none;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(212,237,232,.85);
+  backdrop-filter: blur(8px);
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  z-index: 2;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+.metrics-top.visible { display: flex; }
+
+.metric-top-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-3);
+  font-family: var(--mono);
+}
+.metric-top-card .mt-val {
+  font-size: 18px;
+  font-weight: 700;
+}
+.metric-top-card .mt-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--white-4);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.metric-top-card.c-teal .mt-val { color: var(--cyan); }
+.metric-top-card.c-blue .mt-val { color: var(--blue); }
+.metric-top-card.c-em   .mt-val { color: var(--emerald); }
+.metric-top-card.c-amb  .mt-val { color: var(--amber); }
 
 .right-title {
   font-size: 13px;
@@ -720,14 +765,16 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* ════════════════════════════════════════════
-   GANTT CANVAS
+   GANTT CANVAS — single-line mode
 ════════════════════════════════════════════ */
 .gantt-area {
   flex: 1;
   overflow: auto;
-  padding: 14px 18px;
+  padding: 8px 14px;
   position: relative;
   z-index: 1;
+  min-height: 0;
+  max-height: calc(100vh - 54px - 34px - 28px - 450px); /* topbar + right-header + metrics + results */
 }
 
 .gantt-empty {
@@ -741,121 +788,146 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .gantt-empty svg { opacity: .35; }
-.gantt-empty p { font-size: 14px; font-weight: 600; color: var(--white-3); }
-.gantt-empty span { font-size: 12px; color: var(--white-4); }
+.gantt-empty p { font-size: 13px; font-weight: 600; color: var(--white-3); }
+.gantt-empty span { font-size: 11px; color: var(--white-4); }
 
-#gantt-wrap { min-width: 500px; }
+/* Single-line gantt */
+#gantt-wrap {
+  min-width: max-content;
+  width: max-content;
+  padding-bottom: 4px;
+}
 
-.g-row {
+/* Legend row above the single track */
+.g-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.g-legend-item {
   display: flex;
   align-items: center;
-  height: 38px;
-  margin-bottom: 6px;
-  overflow: visible;
-}
-
-.g-label {
-  width: 60px;
-  flex-shrink: 0;
+  gap: 4px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  text-align: right;
-  padding-right: 14px;
   color: var(--white-3);
 }
-
-.g-track {
-  flex: 1;
-  position: relative;
-  height: 36px;
+.g-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
-.g-track-bg {
-  position: absolute;
-  top: 6px;
-  left: 0;
-  height: 20px;
+/* The single timeline track */
+.g-single-track {
+  position: relative;
+  height: 24px;
   background: var(--bg-3);
   border: 1px solid var(--border);
   border-radius: 6px;
+  overflow: visible;
 }
 
-.g-vlines {
+/* Segments rendered inside the single track */
+.g-seg {
   position: absolute;
-  top: 6px;
-  left: 0;
-  height: 20px;
-  pointer-events: none;
-}
-
-.g-bar {
-  position: absolute;
-  top: 6px;
-  height: 20px;
-  border-radius: 7px;
+  top: 0;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  color: #fff;
-  width: 0;
-  overflow: hidden;
+  color: rgba(255,255,255,0.8);
   white-space: nowrap;
-  transition: width .45s cubic-bezier(.34,1.4,.64,1);
-  cursor: default;
+  overflow: hidden;
+  width: 0;
+  transition: width .4s cubic-bezier(.34,1.4,.64,1);
+  cursor: pointer;
   z-index: 2;
+  text-shadow: 0 0 3px rgba(0,0,0,0.3);
 }
 
-.g-bar:hover { transform: scaleY(1.15); z-index: 10; filter: brightness(1.2); }
+/* Show text only if width is sufficient */
+.g-seg[data-showtext="true"] { font-size: 11px; color: rgba(255,255,255,0.9); }
 
+/* First/last segment rounding */
+.g-seg:first-child { border-radius: 6px 0 0 6px; }
+.g-seg:last-child  { border-radius: 0 6px 6px 0; }
+
+/* Tooltip-style label on hover only */
+.g-seg:hover {
+  z-index: 10;
+  filter: brightness(1.18);
+  transform: scaleY(1.12);
+}
+.g-seg:hover::after {
+  content: attr(data-name);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10,30,28,.92);
+  color: #fff;
+  font-size: 9px;
+  font-family: var(--mono);
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+/* Cursor line */
 .g-cursor {
   position: absolute;
-  top: 0;
-  height: 100%;
+  top: -4px;
+  height: calc(100% + 8px);
   width: 2px;
-  background: rgba(0,137,123,.7);
+  background: rgba(0,137,123,.8);
   border-radius: 1px;
   z-index: 5;
   opacity: 0;
   transition: left .28s ease, opacity .18s;
   pointer-events: none;
 }
-
 .g-cursor::before {
   content: '';
   position: absolute;
-  top: -4px; left: 50%;
+  top: -3px; left: 50%;
   transform: translateX(-50%);
-  width: 7px; height: 7px;
+  width: 5px; height: 5px;
   border-radius: 50%;
   background: var(--cyan);
   box-shadow: var(--glow-cyan);
 }
 
+/* Tick ruler */
 .g-ticks {
   position: relative;
-  height: 20px;
+  height: 16px;
   border-top: 1px solid var(--border-2);
-  margin-left: 62px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
-
 .g-tick {
   position: absolute;
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--white-4);
+  font-size: 8px;
+  color: var(--white-5);
   font-weight: 700;
   transform: translateX(-50%);
   top: 2px;
+  white-space: nowrap;
 }
-
 .g-tick-major {
   color: var(--cyan);
-  font-size: 11px;
+  font-size: 9px;
 }
 
 /* ════════════════════════════════════════════
@@ -867,7 +939,8 @@ input[type=range]::-webkit-slider-thumb {
   backdrop-filter: blur(10px);
   flex-shrink: 0;
   overflow-y: auto;
-  max-height: 270px;
+  max-height: 450px;
+  min-height: 120px;
   display: none;
   position: relative;
   z-index: 2;
@@ -876,7 +949,7 @@ input[type=range]::-webkit-slider-thumb {
 .results-area.visible { display: block; }
 
 .results-header {
-  padding: 13px 22px 10px;
+  padding: 8px 16px 7px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -884,7 +957,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .results-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--white);
   display: flex; align-items: center; gap: 8px;
@@ -894,13 +967,7 @@ input[type=range]::-webkit-slider-thumb {
 .results-title i { color: var(--cyan); }
 
 .metrics-row {
-  display: flex;
-  gap: 12px;
-  padding: 14px 22px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-  justify-content: center;
-  flex-wrap: wrap;
+  display: none; /* hidden – metrics moved to top bar */
 }
 
 .metric-card {
@@ -952,20 +1019,20 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .res-table-wrap {
-  padding: 0 22px 14px;
+  padding: 0 16px 10px;
   overflow-x: auto;
 }
 
 .res-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
-  margin-top: 10px;
+  font-size: 11px;
+  margin-top: 8px;
 }
 
 .res-table th {
   background: var(--bg-3);
-  padding: 7px 10px;
+  padding: 5px 8px;
   text-align: left;
   font-size: 9px;
   font-weight: 700;
@@ -976,11 +1043,11 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .res-table td {
-  padding: 7px 10px;
+  padding: 5px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--white-2);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .res-table tr:last-child td { border-bottom: none; }
@@ -1180,6 +1247,11 @@ input[type=range]::-webkit-slider-thumb {
         </div>
       </div>
 
+      <!-- Metrics top bar (shown after simulation) -->
+      <div class="metrics-top" id="metrics-top">
+        <!-- filled by JS -->
+      </div>
+
       <!-- Gantt canvas -->
       <div class="gantt-area" id="gantt-area">
         <div class="gantt-empty" id="gantt-empty">
@@ -1240,9 +1312,25 @@ let simPaused = false;
 let simTimer  = null;
 
 const COLORS = [
-  '#00897b','#26c6da','#4db6ac','#80cbc4','#00acc1',
-  '#26a69a','#00bcd4','#4dd0e1','#b2dfdb','#80deea'
+  '#00897b','#26c6da','#ef5350','#ab47bc','#ff7043',
+  '#29b6f6','#66bb6a','#ffa726','#ec407a','#5c6bc0',
+  '#26a69a','#d4e157','#8d6e63','#42a5f5','#ff8a65',
+  '#9ccc65','#ffca28','#00bcd4','#7e57c2','#78909c',
+  '#00acc1','#8bc34a','#ffd54f','#ff8a80','#40c4ff',
+  '#f06292','#4caf50','#ff9800','#9c27b0','#03a9f4',
+  '#e91e63','#cddc39','#795548','#607d8b','#f44336',
+  '#3f51b5','#009688','#ff5722','#673ab7','#2196f3',
+  '#4db6ac','#aed581','#ffb74d','#f48fb1','#90caf9',
+  '#ce93d8','#a5d6a7','#fff176','#ffcc80','#80cbc4',
+  '#80deea','#b39ddb','#bcaaa4','#eeeeee','#e0e0e0',
+  '#c5e1a5','#ffe082','#ef9a9a','#80cbc4','#b0bec5'
 ];
+// For processes beyond palette, generate via HSL
+function getColor(index) {
+  if (index < COLORS.length) return COLORS[index];
+  const hue = (index * 47) % 360;
+  return `hsl(${hue}, 70%, 55%)`;
+}
 
 // ── ALGORITMO ────────────────────────────────
 function selectAlgo(a) {
@@ -1330,7 +1418,7 @@ function renderTable() {
   document.getElementById('table-wrap').style.display   = n ? '' : 'none';
 
   document.getElementById('proc-tbody').innerHTML = processes.map((p, i) => {
-    const c = COLORS[i % COLORS.length];
+    const c = getColor(i);
     return `<tr>
       <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${p.name}</span></td>
       <td>${p.at}</td>
@@ -1403,55 +1491,55 @@ function runSimulation() {
 }
 
 function initGantt(totalTime) {
-  // Unidad adaptativa: a más tiempo total, más pequeña la unidad para no agrandar infinito
-  // Hasta 50 → 52px | 51-100 → 32px | 101-300 → 18px | 301-600 → 10px | 600+ → 6px
-  const unit = totalTime <= 50  ? 38
-             : totalTime <= 100 ? 24
-             : totalTime <= 300 ? 14
-             : totalTime <= 600 ? 8
-             : 5;
-  const W    = totalTime * unit;
-  const procOrder= [...new Set(schedule.map(s => s.name))];
+  // Adaptive unit: much more compressed for 100 data
+  const unit = totalTime <= 30  ? 28
+             : totalTime <= 60  ? 16
+             : totalTime <= 120 ? 10
+             : totalTime <= 300 ? 6
+             : totalTime <= 600 ? 4
+             : 3;
+  const W = totalTime * unit;
 
-  window._gUnit  = unit;
-  window._gOrder = procOrder;
-  window._gW     = W;
+  window._gUnit = unit;
+  window._gW    = W;
 
-  let html = '';
-
-  procOrder.forEach(name => {
+  // Build color map per process
+  const procOrder = [...new Set(schedule.map(s => s.name))];
+  window._gOrder  = procOrder;
+  const colorMap  = {};
+  procOrder.forEach((name, i) => {
     const pi = processes.findIndex(p => p.name === name);
-    const c  = COLORS[pi % COLORS.length];
-    html += `
-      <div class="g-row">
-        <div class="g-label" style="color:${c}">${name}</div>
-        <div class="g-track" style="width:${W}px;min-width:${W}px">
-          <div class="g-track-bg" style="width:${W}px"></div>
-          <div class="g-vlines" style="width:${W}px;background: repeating-linear-gradient(to right, transparent 0px, transparent ${unit-1}px, rgba(0,137,123,.06) ${unit-1}px, rgba(0,137,123,.06) ${unit}px);"></div>
-        </div>
-      </div>`;
+    colorMap[name] = getColor(pi >= 0 ? pi : i);
   });
+  window._gColorMap = colorMap;
 
-  const ROW_H = 44; // must match .g-row height(38) + margin-bottom(6)
-  window._gRowH = ROW_H;
-  html += `<div id="g-abs" style="position:absolute;top:0;left:62px;pointer-events:none;width:${W}px;height:${procOrder.length*ROW_H}px">`;
-  html += `<div class="g-cursor" id="g-cursor"></div>`;
-  html += `</div>`;
+  // Legend
+  let legendHtml = '<div class="g-legend">';
+  procOrder.forEach(name => {
+    legendHtml += `<div class="g-legend-item"><div class="g-legend-dot" style="background:${colorMap[name]}"></div>${name}</div>`;
+  });
+  legendHtml += '</div>';
 
-  // Adaptive tick step: every number up to 99, every 5 from 100–499, every 10 from 500+
-  const tickStep = totalTime < 100 ? 1 : totalTime < 500 ? 5 : 10;
-  let ticks = `<div class="g-ticks" style="width:${W}px">`;
+  // Single track container
+  const trackHtml = `
+    <div style="position:relative">
+      <div class="g-single-track" id="g-track" style="width:${W}px;min-width:${W}px">
+        <div class="g-cursor" id="g-cursor"></div>
+      </div>
+    </div>`;
+
+  // Ticks
+  const tickStep = totalTime <= 20 ? 1 : totalTime <= 60 ? 5 : totalTime <= 200 ? 10 : totalTime <= 500 ? 25 : 50;
+  let ticks = `<div class="g-ticks" style="width:${W}px;margin-left:0">`;
   for (let t = 0; t <= totalTime; t++) {
     if (t % tickStep === 0 || t === totalTime) {
-      // Highlight multiples of 10x the step for readability at large scales
-      const isMajor = tickStep > 1 && t % (tickStep * 2) === 0;
-      ticks += `<span class="g-tick${isMajor ? ' g-tick-major' : ''}" style="left:${t*unit}px">${t}</span>`;
+      const isMajor = t % (tickStep * 2) === 0 || t === 0 || t === totalTime;
+      ticks += `<span class="g-tick${isMajor ? ' g-tick-major' : ''}" style="left:${t * unit}px">${t}</span>`;
     }
   }
   ticks += '</div>';
 
-  document.getElementById('gantt-wrap').innerHTML =
-    `<div style="position:relative">${html}</div>${ticks}`;
+  document.getElementById('gantt-wrap').innerHTML = legendHtml + trackHtml + ticks;
 }
 
 function animateStep(totalTime) {
@@ -1461,46 +1549,55 @@ function animateStep(totalTime) {
 
   const step  = schedule[stepIndex];
   const unit  = window._gUnit;
-  const order = window._gOrder;
+  const colorMap = window._gColorMap || {};
 
-  const pi    = processes.findIndex(p => p.name === step.name);
-  const c     = COLORS[pi % COLORS.length];
-  const ri    = order.indexOf(step.name);
+  const c = colorMap[step.name] || getColor(0);
 
-  const absArea = document.getElementById('g-abs');
-  if (!absArea) { finishSim(); return; }
+  const track = document.getElementById('g-track');
+  if (!track) { finishSim(); return; }
 
-  const ROW_H = window._gRowH || 60;
-  const BAR_TOP = 6; // matches .g-track-bg top: 6px
-  const top   = ri * ROW_H + BAR_TOP;
   const left  = step.start * unit;
   const width = (step.end - step.start) * unit;
+  
+  // Show text if less than 100 processes
+  const showText = schedule.length < 100;
 
-  const bar = document.createElement('div');
-  bar.className = 'g-bar';
-  bar.style.cssText = `top:${top}px;left:${left}px;background:${c};box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 16px ${c}55, inset 0 1px 0 rgba(255,255,255,.25);`;
-  bar.title = `${step.name} | t=${step.start}→${step.end} | T.Ejecución=${step.end-step.start}`;
-  absArea.appendChild(bar);
+  const seg = document.createElement('div');
+  seg.className = 'g-seg';
+  seg.setAttribute('data-name', step.name);
+  seg.setAttribute('data-time', `[${step.start}→${step.end}]`);
+  if (showText) seg.setAttribute('data-showtext', 'true');
+  if (showText) seg.textContent = step.name;
+  seg.style.cssText = `left:${left}px;background:${c};box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer;`;
+  seg.title = `${step.name} | t=${step.start}→${step.end} | Duración=${step.end - step.start}`;
+  
+  // Click to show process info
+  seg.onclick = (e) => {
+    e.stopPropagation();
+    toast(`Proceso: ${step.name} | Tiempo: ${step.start}→${step.end}`, 'ok');
+  };
+  
+  track.appendChild(seg);
 
   const cursor = document.getElementById('g-cursor');
   if (cursor) {
     cursor.style.opacity = '1';
-    cursor.style.left    = (step.start * unit) + 'px';
+    cursor.style.left = left + 'px';
   }
 
   setStatus('running', `Ejecutando ${step.name} · t = ${step.start} → ${step.end}`);
 
+  // Update results table in real time
+  updateResultsInRealTime(stepIndex);
+
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    bar.style.width = width + 'px';
-    setTimeout(() => {
-      if (width > 24) bar.textContent = step.name;
-      if (cursor) cursor.style.left = (step.end * unit) + 'px';
-    }, 380);
+    seg.style.width = width + 'px';
+    if (cursor) cursor.style.left = (step.end * unit) + 'px';
   }));
 
   stepIndex++;
   const speed = parseInt(document.getElementById('speed').value);
-  const delay = Math.max(120, 1500 - speed * 240);
+  const delay = Math.max(80, 1200 - speed * 200);
   simTimer = setTimeout(() => animateStep(totalTime), delay);
 }
 
@@ -1510,10 +1607,10 @@ function finishSim() {
   const cursor = document.getElementById('g-cursor');
   if (cursor) cursor.style.opacity = '0';
   setStatus('done', '¡Simulación completada!');
-  renderResults();
+  renderResultsMetrics();
 }
 
-function renderResults() {
+function renderResultsMetrics() {
   const n      = metrics.length;
   const avgTAT = (metrics.reduce((s,m)=>s+m.tat,0)/n).toFixed(2);
   const avgWT  = (metrics.reduce((s,m)=>s+m.wt, 0)/n).toFixed(2);
@@ -1521,23 +1618,48 @@ function renderResults() {
   const totalBT= processes.reduce((s,p)=>s+p.bt,0);
   const cpuUse = ((totalBT/totalT)*100).toFixed(1);
 
+  // Populate top metrics bar
+  const topBar = document.getElementById('metrics-top');
+  topBar.innerHTML = `
+    <div class="metric-top-card c-teal"><span class="mt-val">${avgTAT}</span><span class="mt-lbl">T. Retorno Prom.</span></div>
+    <div class="metric-top-card c-blue"><span class="mt-val">${avgWT}</span><span class="mt-lbl">T. Espera Prom.</span></div>
+    <div class="metric-top-card c-amb"><span class="mt-val">${n}</span><span class="mt-lbl">Procesos</span></div>`;
+  topBar.classList.add('visible');
+
+  // Keep metrics-row filled (hidden via CSS, for compatibility)
   document.getElementById('metrics-row').innerHTML = `
     <div class="metric-card c-teal"><div class="m-val">${avgTAT}</div><div class="m-lbl">T. Retorno Prom.</div></div>
     <div class="metric-card c-blue"><div class="m-val">${avgWT}</div><div class="m-lbl">T. Espera Prom.</div></div>
     <div class="metric-card c-em"><div class="m-val">${cpuUse}%</div><div class="m-lbl">Uso CPU</div></div>
     <div class="metric-card c-amb"><div class="m-val">${n}</div><div class="m-lbl">Procesos</div></div>`;
+}
 
-  document.getElementById('res-tbody').innerHTML = metrics.map((m,i) => {
-    const c = COLORS[i % COLORS.length];
-    return `<tr>
-      <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${m.name}</span></td>
-      <td>${m.at}</td><td>${m.bt}</td><td>${m.start}</td><td>${m.ct}</td>
-      <td class="td-tat">${m.tat}</td>
-      <td class="td-wt">${m.wt}</td>
-    </tr>`;
-  }).join('');
-
+function updateResultsInRealTime(currentStep) {
+  // Show results area early
   document.getElementById('results-area').classList.add('visible');
+  
+  const tbody = document.getElementById('res-tbody');
+  const scheduledSoFar = schedule.slice(0, currentStep + 1);
+  const processesCompleted = [...new Set(scheduledSoFar.map(s => s.name))];
+  
+  // Build rows for completed processes
+  let html = '';
+  metrics.forEach((m, i) => {
+    if (processesCompleted.includes(m.name)) {
+      const c = getColor(i);
+      html += `<tr>
+        <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${m.name}</span></td>
+        <td>${m.at}</td><td>${m.bt}</td><td>${m.start}</td><td>${m.ct}</td>
+        <td class="td-tat">${m.tat}</td>
+        <td class="td-wt">${m.wt}</td>
+      </tr>`;
+    }
+  });
+  tbody.innerHTML = html;
+  
+  // Scroll to bottom
+  const resultsArea = document.getElementById('results-area');
+  setTimeout(() => { resultsArea.scrollTop = resultsArea.scrollHeight; }, 10);
 }
 
 function togglePause() {
@@ -1559,6 +1681,7 @@ function resetSim(silent = false) {
   document.getElementById('gantt-wrap').style.display  = 'none';
   document.getElementById('gantt-empty').style.display = '';
   document.getElementById('results-area').classList.remove('visible');
+  document.getElementById('metrics-top').classList.remove('visible');
   document.getElementById('gantt-wrap').innerHTML = '';
   if (!silent) setStatus('idle', 'Esperando simulación');
 }

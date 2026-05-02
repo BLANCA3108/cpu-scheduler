@@ -3,54 +3,36 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CPU Proceso Dinámico — FCFS &amp; SPN</title>
+<title>CPU Proceso Dinámico — FCFS, SPN, SRT &amp; RR</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <style>
 :root {
-  --bg:        #f0faf8;
-  --bg-2:      #e4f5f1;
-  --bg-3:      #d4ede8;
-  --bg-4:      #c2e3dc;
-  --bg-5:      #aed8cf;
-
-  --cyan:      #00897b;
-  --cyan-dim:  #00695c;
-  --cyan-glow: rgba(0,137,123,.18);
-  --cyan-faint:rgba(0,137,123,.07);
-
-  --purple:    #26a69a;
-  --purple-dim:#00796b;
-  --purple-faint:rgba(38,166,154,.08);
-
-  --pink:      #4db6ac;
-  --amber:     #26a69a;
-  --emerald:   #00897b;
-  --red:       #ef5350;
-  --blue:      #26c6da;
-
-  --white:     #1a3a35;
-  --white-2:   #2d5a52;
-  --white-3:   #4a7a70;
-  --white-4:   #6b9990;
-  --white-5:   #9dbdb8;
-
-  --border:    rgba(0,137,123,.10);
-  --border-2:  rgba(0,137,123,.16);
-  --border-3:  rgba(0,137,123,.22);
-
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 14px;
-  --r-xl: 20px;
-
+  --bg:         #f0faf8;
+  --bg-2:       #e4f5f1;
+  --bg-3:       #d4ede8;
+  --bg-4:       #c2e3dc;
+  --bg-5:       #aed8cf;
+  --cyan:       #00897b;
+  --cyan-glow:  rgba(0,137,123,.18);
+  --cyan-faint: rgba(0,137,123,.07);
+  --red:        #ef5350;
+  --blue:       #26c6da;
+  --emerald:    #00897b;
+  --amber:      #26a69a;
+  --white:      #1a3a35;
+  --white-2:    #2d5a52;
+  --white-3:    #4a7a70;
+  --white-4:    #6b9990;
+  --white-5:    #9dbdb8;
+  --border:     rgba(0,137,123,.10);
+  --border-2:   rgba(0,137,123,.16);
+  --border-3:   rgba(0,137,123,.22);
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
   --font: 'Space Grotesk', sans-serif;
   --mono: 'Fira Code', monospace;
-
-  --glow-cyan:   0 0 20px rgba(0,137,123,.20);
-  --glow-purple: 0 0 20px rgba(38,166,154,.20);
-  --shadow:      0 8px 32px rgba(0,137,123,.15);
-  --shadow-sm:   0 2px 12px rgba(0,137,123,.10);
+  --glow-cyan: 0 0 20px rgba(0,137,123,.20);
+  --shadow-sm: 0 2px 12px rgba(0,137,123,.10);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -65,27 +47,11 @@ html, body {
   overflow: hidden;
 }
 
-/* ── NOISE TEXTURE ───────────────────────── */
 body::before {
   content: '';
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: .4;
-}
-
-/* ── AMBIENT GLOW ORBS ───────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  top: -200px; left: -200px;
-  width: 600px; height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,137,123,.06) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  pointer-events: none; z-index: 0; opacity: .4;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -93,9 +59,7 @@ body::after {
 ::-webkit-scrollbar-thumb { background: var(--white-5); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--white-4); }
 
-/* ════════════════════════════════════════════
-   LAYOUT
-════════════════════════════════════════════ */
+/* ── LAYOUT ── */
 .app {
   display: grid;
   grid-template-rows: 54px 1fr;
@@ -104,26 +68,18 @@ body::after {
   z-index: 1;
 }
 
-/* ── TOPBAR ─────────────────────────────── */
 .topbar {
   background: rgba(224,245,241,.90);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  position: sticky;
-  top: 0;
   z-index: 100;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.brand { display: flex; align-items: center; gap: 10px; }
 
 .brand-icon {
   width: 32px; height: 32px;
@@ -131,16 +87,10 @@ body::after {
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; color: #fff;
-  flex-shrink: 0;
   box-shadow: var(--glow-cyan);
 }
 
-.brand-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: -.03em;
-}
+.brand-name { font-size: 16px; font-weight: 700; letter-spacing: -.03em; }
 
 .brand-name span {
   background: linear-gradient(90deg, #00897b, #26c6da);
@@ -149,40 +99,19 @@ body::after {
   background-clip: text;
 }
 
-.topbar-chips {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.topbar-chips { display: flex; align-items: center; gap: 8px; }
 
 .chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   padding: 5px 13px;
   border-radius: 99px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 11px; font-weight: 600;
   font-family: var(--mono);
-  letter-spacing: .02em;
-  transition: all .2s;
 }
-
-.chip-cyan {
-  border: 1px solid rgba(0,137,123,.3);
-  background: rgba(0,137,123,.08);
-  color: var(--cyan);
-}
-
-.chip-purple {
-  border: 1px solid rgba(38,198,188,.3);
-  background: rgba(38,198,188,.08);
-  color: #00796b;
-}
-
 .chip i { font-size: 9px; }
+.chip-cyan  { border: 1px solid rgba(0,137,123,.3);  background: rgba(0,137,123,.08);  color: var(--cyan); }
+.chip-purple{ border: 1px solid rgba(38,198,188,.3); background: rgba(38,198,188,.08); color: #00796b; }
 
-/* ── BODY GRID ──────────────────────────── */
 .body {
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -190,82 +119,62 @@ body::after {
   overflow: hidden;
 }
 
-/* ── LEFT ───────────────────────────────── */
 .left {
   background: var(--bg-2);
   border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
 }
 
-/* ── RIGHT ──────────────────────────────── */
 .right {
   background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
 }
 
-/* Decorative grid lines on right panel */
 .right::before {
   content: '';
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background-image:
     linear-gradient(var(--border) 1px, transparent 1px),
     linear-gradient(90deg, var(--border) 1px, transparent 1px);
   background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
+  pointer-events: none; z-index: 0;
 }
 
-/* ════════════════════════════════════════════
-   SECTION
-════════════════════════════════════════════ */
+/* ── SECTION ── */
 .section {
   padding: 18px 20px;
   border-bottom: 1px solid var(--border);
-  position: relative;
 }
-
 .section:last-child { border-bottom: none; }
 
 .section-title {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 10px; font-weight: 700;
   color: var(--white-3);
-  text-transform: uppercase;
-  letter-spacing: .12em;
+  text-transform: uppercase; letter-spacing: .12em;
   margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
-
-.section-title i {
-  color: var(--cyan);
-  font-size: 10px;
-}
-
+.section-title i { color: var(--cyan); font-size: 10px; }
 .section-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
+  content: ''; flex: 1; height: 1px;
   background: linear-gradient(90deg, var(--border-2), transparent);
 }
 
-/* ════════════════════════════════════════════
-   ALGO SELECTOR
-════════════════════════════════════════════ */
-.algo-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
+/* ── ALGO SELECTOR ── */
+.algo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.algo-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+
+/* Quantum field — only visible when RR is selected */
+.quantum-row { display: none; gap: 10px; align-items: end; margin-bottom: 10px; }
+.quantum-row.visible { display: grid; grid-template-columns: 1fr 1fr; }
+.quantum-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(171,71,188,.12); border: 1px solid rgba(171,71,188,.3);
+  color: #ab47bc; border-radius: 99px;
+  font-size: 10px; font-weight: 700; padding: 3px 10px; font-family: var(--mono);
+  margin-left: 8px;
 }
 
 .algo-btn {
@@ -274,67 +183,32 @@ body::after {
   border-radius: var(--r-lg);
   padding: 14px 16px;
   background: var(--bg-3);
-  cursor: pointer;
-  text-align: left;
+  cursor: pointer; text-align: left;
   transition: all .22s cubic-bezier(.34,1.4,.64,1);
-  color: var(--white);
-  font-family: var(--font);
+  color: var(--white); font-family: var(--font);
   overflow: hidden;
 }
-
-.algo-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--cyan-faint), transparent);
-  opacity: 0;
-  transition: opacity .2s;
-}
-
 .algo-btn:hover { border-color: var(--border-3); transform: translateY(-1px); }
-.algo-btn:hover::before { opacity: 1; }
-
 .algo-btn.active {
   border-color: var(--cyan);
   background: var(--bg-4);
   box-shadow: 0 0 0 2px var(--cyan-glow), inset 0 0 30px var(--cyan-faint);
 }
 
-.algo-btn.active::before { opacity: 1; }
-
 .check {
-  position: absolute;
-  top: 10px; right: 10px;
+  position: absolute; top: 10px; right: 10px;
   width: 17px; height: 17px;
-  background: var(--cyan);
-  border-radius: 50%;
+  background: var(--cyan); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 8px;
-  color: var(--bg);
-  font-weight: 800;
-  opacity: 0;
-  transform: scale(.3) rotate(-90deg);
+  font-size: 8px; color: var(--bg); font-weight: 800;
+  opacity: 0; transform: scale(.3) rotate(-90deg);
   transition: all .25s cubic-bezier(.34,1.4,.64,1);
 }
-
 .algo-btn.active .check { opacity: 1; transform: scale(1) rotate(0deg); }
 
-.algo-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--white);
-  font-family: var(--mono);
-  letter-spacing: -.02em;
-  margin-bottom: 1px;
-}
-
+.algo-name { font-size: 16px; font-weight: 700; font-family: var(--mono); margin-bottom: 1px; }
 .algo-btn.active .algo-name { color: var(--cyan); }
-
-.algo-full {
-  font-size: 10px;
-  color: var(--white-4);
-  line-height: 1.3;
-}
+.algo-full { font-size: 10px; color: var(--white-4); line-height: 1.3; }
 
 .algo-desc-box {
   background: var(--bg-3);
@@ -342,51 +216,34 @@ body::after {
   border-left: 3px solid var(--cyan);
   border-radius: 0 var(--r-md) var(--r-md) 0;
   padding: 10px 13px;
-  font-size: 12px;
-  color: var(--white-3);
-  line-height: 1.6;
+  font-size: 12px; color: var(--white-3); line-height: 1.6;
 }
-
 .algo-desc-box b { color: var(--cyan); font-weight: 600; }
 
-/* ════════════════════════════════════════════
-   ENTRADA DE DATOS
-════════════════════════════════════════════ */
+/* ── INPUTS ── */
 .input-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr;
-  gap: 10px;
-  align-items: end;
-  margin-bottom: 10px;
+  gap: 10px; align-items: end; margin-bottom: 10px;
 }
 
 .field label {
   display: block;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 10px; font-weight: 700;
   color: var(--white-4);
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  text-transform: uppercase; letter-spacing: .08em;
   margin-bottom: 6px;
 }
 
 .field input {
-  width: 100%;
-  padding: 13px 14px;
+  width: 100%; padding: 13px 14px;
   background: var(--bg-2);
   border: 1px solid var(--border-2);
   border-radius: var(--r-md);
-  color: var(--white);
-  font-family: var(--mono);
-  font-size: 16px;
-  outline: none;
-  transition: all .18s;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-  min-width: 0;
+  color: var(--white); font-family: var(--mono); font-size: 16px;
+  outline: none; transition: all .18s; min-width: 0;
 }
-
 .field input::placeholder { color: var(--white-5); }
-
 .field input:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 0 3px var(--cyan-glow);
@@ -396,763 +253,458 @@ body::after {
 .btn-add {
   padding: 13px 20px;
   background: linear-gradient(135deg, #00897b 0%, #26c6da 100%);
-  color: var(--bg);
-  border: none;
-  border-radius: var(--r-md);
-  font-family: var(--font);
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
+  color: var(--bg); border: none; border-radius: var(--r-md);
+  font-family: var(--font); font-weight: 700; font-size: 14px;
+  cursor: pointer; width: 100%; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   box-shadow: 0 4px 14px var(--cyan-glow);
-  margin-top: 0;
+  transition: all .2s;
 }
+.btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,229,212,.35); }
 
-.btn-add:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,229,212,.35);
-}
-
-.btn-add:active { transform: translateY(0); }
-
-/* File drop */
 .file-drop {
   border: 1px dashed var(--border-3);
   border-radius: var(--r-md);
-  padding: 12px;
-  text-align: center;
-  cursor: pointer;
-  background: var(--bg-3);
-  transition: all .2s;
-  display: block;
+  padding: 12px; text-align: center;
+  cursor: pointer; background: var(--bg-3);
+  transition: all .2s; display: block;
 }
-
-.file-drop:hover {
-  border-color: var(--cyan);
-  background: var(--cyan-faint);
-}
-
+.file-drop:hover { border-color: var(--cyan); background: var(--cyan-faint); }
 .file-drop i { color: var(--cyan); margin-bottom: 3px; font-size: 16px; display: block; }
 .file-drop strong { font-size: 12px; color: var(--white-2); display: block; margin-bottom: 2px; }
 .file-drop span { font-size: 11px; color: var(--white-4); }
 .file-drop code {
-  background: rgba(0,229,212,.12);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--cyan);
-  font-family: var(--mono);
-  font-size: 10px;
+  background: rgba(0,229,212,.12); padding: 1px 5px;
+  border-radius: 4px; color: var(--cyan);
+  font-family: var(--mono); font-size: 10px;
 }
 
-/* ════════════════════════════════════════════
-   TABLA DE PROCESOS
-════════════════════════════════════════════ */
+/* ── TABLA PROCESOS ── */
 .proc-header {
-  display: flex;
-  align-items: center;
+  display: flex; align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
-  gap: 8px;
+  margin-bottom: 10px; gap: 8px;
 }
-
-.proc-count {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--white-4);
-  font-family: var(--mono);
-}
+.proc-count { font-size: 13px; font-weight: 700; color: var(--white-4); font-family: var(--mono); }
 
 .btn-ghost {
-  background: none;
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-sm);
-  color: var(--white-4);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-family: var(--font);
+  background: none; border: 1px solid var(--border-2);
+  border-radius: var(--r-sm); color: var(--white-4);
+  font-size: 11px; font-weight: 600; padding: 6px 12px;
+  cursor: pointer; font-family: var(--font);
   transition: all .18s;
   display: flex; align-items: center; gap: 6px;
 }
+.btn-ghost:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.06); }
 
-.btn-ghost:hover {
-  border-color: var(--red);
-  color: var(--red);
-  background: rgba(248,113,113,.06);
-}
-
-.empty-proc {
-  text-align: center;
-  padding: 24px 16px;
-  color: var(--white-5);
-}
-
+.empty-proc { text-align: center; padding: 24px 16px; color: var(--white-5); }
 .empty-proc p { font-size: 12px; font-weight: 600; color: var(--white-4); margin-bottom: 3px; }
 .empty-proc span { font-size: 11px; }
 
-.proc-table-wrap {
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  overflow-x: auto;
-}
-
-.proc-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
+.proc-table-wrap { border-radius: var(--r-md); border: 1px solid var(--border); overflow: hidden; }
+.proc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .proc-table th {
-  background: var(--bg-4);
-  padding: 7px 11px;
-  text-align: left;
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--white-4);
-  text-transform: uppercase;
-  letter-spacing: .08em;
+  background: var(--bg-4); padding: 7px 11px; text-align: left;
+  font-size: 9px; font-weight: 700; color: var(--white-4);
+  text-transform: uppercase; letter-spacing: .08em;
   border-bottom: 1px solid var(--border);
 }
-
 .proc-table td {
-  padding: 8px 11px;
-  border-bottom: 1px solid var(--border);
-  color: var(--white-2);
-  vertical-align: middle;
-  font-family: var(--mono);
-  font-size: 12px;
+  padding: 8px 11px; border-bottom: 1px solid var(--border);
+  color: var(--white-2); font-family: var(--mono); font-size: 12px;
 }
-
 .proc-table tr:last-child td { border-bottom: none; }
 .proc-table tr:hover td { background: var(--bg-4); }
 
 .p-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 7px;
-  vertical-align: middle;
+  width: 7px; height: 7px; border-radius: 50%;
+  display: inline-block; margin-right: 7px; vertical-align: middle;
   box-shadow: 0 0 6px currentColor;
 }
-
 .p-name { font-family: var(--mono); font-weight: 600; color: var(--white); }
 
 .del-btn {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background: rgba(248,113,113,.08);
-  color: var(--red);
-  font-size: 9px;
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: all .18s;
-  opacity: .5;
+  width: 22px; height: 22px; border-radius: 50%; border: none;
+  cursor: pointer; background: rgba(248,113,113,.08); color: var(--red);
+  font-size: 9px; display: inline-flex; align-items: center; justify-content: center;
+  transition: all .18s; opacity: .5;
 }
-
 .del-btn:hover { background: var(--red); color: #fff; opacity: 1; transform: scale(1.1); }
 
-/* ════════════════════════════════════════════
-   CONTROLES
-════════════════════════════════════════════ */
-.sim-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+/* ── CONTROLES ── */
+.sim-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 .btn-run {
   padding: 10px 22px;
   background: linear-gradient(135deg, #00897b 0%, #26c6da 100%);
-  color: var(--bg);
-  border: none;
-  border-radius: 99px;
-  font-family: var(--font);
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex; align-items: center; gap: 8px;
-  transition: all .2s;
-  box-shadow: 0 4px 18px var(--cyan-glow);
+  color: var(--bg); border: none; border-radius: 99px;
+  font-family: var(--font); font-weight: 700; font-size: 13px;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: all .2s; box-shadow: 0 4px 18px var(--cyan-glow);
 }
-
-.btn-run:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 26px rgba(0,229,212,.4);
-}
-
+.btn-run:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,229,212,.4); }
 .btn-run i { font-size: 10px; }
 
 .btn-sec {
-  padding: 10px 16px;
-  background: var(--bg-4);
-  border: 1px solid var(--border-2);
-  border-radius: 99px;
-  color: var(--white-3);
-  font-family: var(--font);
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex; align-items: center; gap: 7px;
-  transition: all .18s;
+  padding: 10px 16px; background: var(--bg-4);
+  border: 1px solid var(--border-2); border-radius: 99px;
+  color: var(--white-3); font-family: var(--font); font-weight: 600;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; gap: 7px; transition: all .18s;
 }
-
 .btn-sec:hover { background: var(--bg-5); border-color: var(--border-3); }
 .btn-sec.btn-pause-active { border-color: var(--cyan); color: var(--cyan); }
 
 .speed-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--white-4);
-  margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--white-4); margin-left: auto;
 }
 
 input[type=range] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 64px;
-  height: 3px;
-  background: var(--bg-5);
-  border-radius: 99px;
-  cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  width: 64px; height: 3px;
+  background: var(--bg-5); border-radius: 99px; cursor: pointer;
 }
-
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 13px; height: 13px;
-  border-radius: 50%;
-  background: var(--cyan);
-  cursor: pointer;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--cyan); cursor: pointer;
   box-shadow: 0 0 8px var(--cyan-glow);
 }
+.speed-val { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--cyan); min-width: 22px; }
 
-.speed-val {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--cyan);
-  min-width: 22px;
-}
-
-/* ════════════════════════════════════════════
-   RIGHT — GANTT HEADER
-════════════════════════════════════════════ */
+/* ── RIGHT HEADER ── */
 .right-header {
   padding: 6px 16px;
   border-bottom: 1px solid var(--border);
   background: rgba(224,245,241,.80);
   backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 6px;
-  position: relative;
-  z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; flex-wrap: wrap; gap: 6px;
+  position: relative; z-index: 2;
 }
 
-/* ── METRICS TOP BAR ──────────────────────── */
-.metrics-top {
-  display: none;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(212,237,232,.85);
-  backdrop-filter: blur(8px);
-  gap: 10px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  z-index: 2;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-}
-.metrics-top.visible { display: flex; }
-
-.metric-top-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 99px;
-  border: 1px solid var(--border-2);
-  background: var(--bg-3);
-  font-family: var(--mono);
-}
-.metric-top-card .mt-val {
-  font-size: 18px;
-  font-weight: 700;
-}
-.metric-top-card .mt-lbl {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--white-4);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-.metric-top-card.c-teal .mt-val { color: var(--cyan); }
-.metric-top-card.c-blue .mt-val { color: var(--blue); }
-.metric-top-card.c-em   .mt-val { color: var(--emerald); }
-.metric-top-card.c-amb  .mt-val { color: var(--amber); }
-
-.right-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--white);
-  display: flex; align-items: center; gap: 8px;
-  letter-spacing: -.01em;
-}
-
+.right-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .right-title i { color: var(--cyan); }
 
+/* ── METRICS TOP ── */
+.metrics-top { display: none; }
+.metrics-top.visible { display: none; }
+
+/* ── STATUS PILL ── */
 .status-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 13px;
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--bg-3);
-  border: 1px solid var(--border-2);
-  color: var(--white-4);
-  transition: all .3s;
-  font-family: var(--mono);
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 13px; border-radius: 99px;
+  font-size: 11px; font-weight: 600;
+  background: var(--bg-3); border: 1px solid var(--border-2);
+  color: var(--white-4); transition: all .3s; font-family: var(--mono);
 }
+.status-pill.running { background: var(--cyan-faint); border-color: rgba(0,229,212,.4); color: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow); }
+.status-pill.done    { background: rgba(52,211,153,.08); border-color: rgba(52,211,153,.4); color: var(--emerald); }
 
-.status-pill.running {
-  background: var(--cyan-faint);
-  border-color: rgba(0,229,212,.4);
+.algo-btn#btn-srt.active { border-color: #ab47bc; box-shadow: 0 0 0 2px rgba(171,71,188,.18), inset 0 0 30px rgba(171,71,188,.07); }
+.algo-btn#btn-srt.active .check { background: #ab47bc; }
+.algo-btn#btn-rr.active  { border-color: #ff7043; box-shadow: 0 0 0 2px rgba(255,112,67,.18), inset 0 0 30px rgba(255,112,67,.07); }
+.algo-btn#btn-rr.active .check  { background: #ff7043; }
+
+.badge-exp {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 8px; font-weight: 800; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+  letter-spacing: .05em; margin-top: 3px;
+  background: rgba(255,112,67,.12); border: 1px solid rgba(255,112,67,.3);
+  color: #ff7043;
+}
+.badge-noexp {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 8px; font-weight: 800; font-family: var(--mono);
+  padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+  letter-spacing: .05em; margin-top: 3px;
+  background: rgba(0,137,123,.10); border: 1px solid rgba(0,137,123,.25);
   color: var(--cyan);
-  box-shadow: 0 0 12px var(--cyan-glow);
 }
-
-.status-pill.done {
-  background: rgba(52,211,153,.08);
-  border-color: rgba(52,211,153,.4);
-  color: var(--emerald);
-}
-
-.s-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--white-5);
-  transition: background .3s;
-  flex-shrink: 0;
-}
-
-.status-pill.running .s-dot {
-  background: var(--cyan);
-  animation: pulse 1.2s infinite;
-}
-
-.status-pill.done .s-dot { background: var(--emerald); }
+.status-pill.running .s-dot { background: var(--cyan); animation: pulse 1.2s infinite; }
+.status-pill.done    .s-dot { background: var(--emerald); }
 
 @keyframes pulse {
   0%,100% { opacity:1; box-shadow: 0 0 0 0 var(--cyan-glow); }
-  50% { opacity:.5; box-shadow: 0 0 0 4px transparent; }
+  50%      { opacity:.5; box-shadow: 0 0 0 4px transparent; }
 }
 
-/* ════════════════════════════════════════════
-   GANTT CANVAS — single-line mode
-════════════════════════════════════════════ */
+/* ── GANTT ── */
 .gantt-area {
-  flex: 1;
-  overflow: auto;
-  padding: 8px 14px;
-  position: relative;
-  z-index: 1;
-  min-height: 0;
-  max-height: calc(100vh - 54px - 34px - 28px - 450px); /* topbar + right-header + metrics + results */
+  flex: 1; overflow: auto; padding: 8px 14px;
+  position: relative; z-index: 1; min-height: 0;
 }
 
 .gantt-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 14px;
-  color: var(--white-4);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; gap: 14px; color: var(--white-4);
 }
-
 .gantt-empty svg { opacity: .35; }
 .gantt-empty p { font-size: 13px; font-weight: 600; color: var(--white-3); }
-.gantt-empty span { font-size: 11px; color: var(--white-4); }
+.gantt-empty span { font-size: 11px; }
 
-/* Single-line gantt */
-#gantt-wrap {
-  min-width: max-content;
-  width: max-content;
-  padding-bottom: 4px;
-}
+#gantt-wrap { min-width: max-content; width: max-content; padding-bottom: 4px; }
 
-/* Legend row above the single track */
-.g-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-  align-items: center;
-}
-.g-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--white-3);
-}
-.g-legend-dot {
-  width: 8px; height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
+.g-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+.g-legend-item { display: flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 9px; font-weight: 700; color: var(--white-3); }
+.g-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
 
-/* The single timeline track */
 .g-single-track {
-  position: relative;
-  height: 24px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: visible;
+  position: relative; height: 24px;
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 6px; overflow: visible;
 }
 
-/* Segments rendered inside the single track */
 .g-seg {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  width: 0;
-  transition: width .4s cubic-bezier(.34,1.4,.64,1);
-  cursor: pointer;
-  z-index: 2;
-  text-shadow: 0 0 3px rgba(0,0,0,0.3);
+  position: absolute; top: 0; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden;
+  width: 0; transition: width .4s cubic-bezier(.34,1.4,.64,1);
+  cursor: pointer; z-index: 2; text-shadow: 0 0 3px rgba(0,0,0,0.3);
 }
-
-/* Show text only if width is sufficient */
-.g-seg[data-showtext="true"] { font-size: 11px; color: rgba(255,255,255,0.9); }
-
-/* First/last segment rounding */
 .g-seg:first-child { border-radius: 6px 0 0 6px; }
 .g-seg:last-child  { border-radius: 0 6px 6px 0; }
-
-/* Tooltip-style label on hover only */
-.g-seg:hover {
-  z-index: 10;
-  filter: brightness(1.18);
-  transform: scaleY(1.12);
-}
+.g-seg:hover { z-index: 10; filter: brightness(1.18); transform: scaleY(1.12); }
 .g-seg:hover::after {
   content: attr(data-name);
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
+  position: absolute; bottom: calc(100% + 4px); left: 50%;
   transform: translateX(-50%);
-  background: rgba(10,30,28,.92);
-  color: #fff;
-  font-size: 9px;
-  font-family: var(--mono);
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  background: rgba(10,30,28,.92); color: #fff;
+  font-size: 9px; font-family: var(--mono); font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+  pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.3);
   border: 1px solid rgba(255,255,255,.08);
 }
 
-/* Cursor line */
 .g-cursor {
-  position: absolute;
-  top: -4px;
-  height: calc(100% + 8px);
-  width: 2px;
-  background: rgba(0,137,123,.8);
-  border-radius: 1px;
-  z-index: 5;
-  opacity: 0;
-  transition: left .28s ease, opacity .18s;
+  position: absolute; top: -4px;
+  height: calc(100% + 8px); width: 2px;
+  background: rgba(0,137,123,.8); border-radius: 1px;
+  z-index: 5; opacity: 0; transition: left .28s ease, opacity .18s;
   pointer-events: none;
 }
 .g-cursor::before {
-  content: '';
-  position: absolute;
-  top: -3px; left: 50%;
+  content: ''; position: absolute; top: -3px; left: 50%;
   transform: translateX(-50%);
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: var(--glow-cyan);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--cyan); box-shadow: var(--glow-cyan);
 }
 
-/* Tick ruler */
-.g-ticks {
-  position: relative;
-  height: 16px;
-  border-top: 1px solid var(--border-2);
-  margin-top: 4px;
-}
-.g-tick {
-  position: absolute;
-  font-family: var(--mono);
-  font-size: 8px;
-  color: var(--white-5);
-  font-weight: 700;
-  transform: translateX(-50%);
-  top: 2px;
-  white-space: nowrap;
-}
-.g-tick-major {
-  color: var(--cyan);
-  font-size: 9px;
-}
+.g-ticks { position: relative; height: 16px; border-top: 1px solid var(--border-2); margin-top: 4px; }
+.g-tick { position: absolute; font-family: var(--mono); font-size: 8px; color: var(--white-5); font-weight: 700; transform: translateX(-50%); top: 2px; white-space: nowrap; }
+.g-tick-major { color: var(--cyan); font-size: 9px; }
 
-/* ════════════════════════════════════════════
-   RESULTADOS
-════════════════════════════════════════════ */
+/* ── INFORME / RESULTADOS ── */
 .results-area {
   border-top: 1px solid var(--border);
-  background: rgba(224,245,241,.90);
-  backdrop-filter: blur(10px);
-  flex-shrink: 0;
-  overflow-y: auto;
-  max-height: 450px;
-  min-height: 120px;
-  display: none;
-  position: relative;
-  z-index: 2;
+  background: rgba(224,245,241,.92);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0; overflow-y: auto;
+  max-height: 520px; min-height: 120px;
+  display: none; position: relative; z-index: 2;
 }
-
 .results-area.visible { display: block; }
 
-.results-header {
-  padding: 8px 16px 7px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+/* Cabecera informe */
+.inf-header {
+  padding: 10px 18px 8px;
+  border-bottom: 1px solid var(--border-2);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
 }
-
-.results-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--white);
-  display: flex; align-items: center; gap: 8px;
-  letter-spacing: -.01em;
+.inf-title {
+  font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;
+  color: var(--white); letter-spacing: -.01em;
 }
-
-.results-title i { color: var(--cyan); }
-
-.metrics-row {
-  display: none; /* hidden – metrics moved to top bar */
+.inf-title i { color: var(--cyan); }
+.inf-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.inf-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 700; font-family: var(--mono);
+  padding: 3px 9px; border-radius: 99px;
+  text-transform: uppercase; letter-spacing: .05em;
 }
+.inf-tag-algo { background: rgba(0,137,123,.12); border: 1px solid rgba(0,137,123,.28); color: var(--cyan); }
+.inf-tag-exp  { background: rgba(255,112,67,.10); border: 1px solid rgba(255,112,67,.28); color: #ff7043; }
+.inf-tag-noexp{ background: rgba(0,137,123,.08); border: 1px solid rgba(0,137,123,.20); color: var(--cyan); }
+.inf-tag-n    { background: rgba(38,198,218,.10); border: 1px solid rgba(38,198,218,.25); color: #26c6da; }
 
-.metric-card {
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 10px 16px;
-  text-align: center;
-  flex-shrink: 0;
-  min-width: 95px;
-  position: relative;
-  overflow: hidden;
-  transition: transform .18s;
+/* Tarjetas resumen */
+.inf-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--border);
 }
-
-.metric-card::before {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
+.inf-card {
+  background: var(--bg-3); border: 1px solid var(--border-2);
+  border-radius: var(--r-md); padding: 9px 12px;
+  display: flex; flex-direction: column; gap: 2px;
 }
-
-.metric-card:hover { transform: translateY(-2px); }
-
-.metric-card.c-teal::before  { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
-.metric-card.c-blue::before  { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
-.metric-card.c-em::before    { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
-.metric-card.c-amb::before   { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-
-.m-val {
-  font-family: var(--mono);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 4px;
+.inf-card-val {
+  font-size: 20px; font-weight: 800; font-family: var(--mono);
+  line-height: 1.1; letter-spacing: -.02em;
 }
+.inf-card-lbl { font-size: 9px; font-weight: 700; color: var(--white-4); text-transform: uppercase; letter-spacing: .08em; }
+.inf-card-sub { font-size: 9px; color: var(--white-5); font-family: var(--mono); margin-top: 1px; }
+.inf-card.c-teal .inf-card-val { color: var(--cyan); }
+.inf-card.c-blue .inf-card-val { color: #26c6da; }
+.inf-card.c-purp .inf-card-val { color: #ab47bc; }
+.inf-card.c-oran .inf-card-val { color: #ff7043; }
+.inf-card.c-gree .inf-card-val { color: #66bb6a; }
+.inf-card.c-yell .inf-card-val { color: #ffa726; }
 
-.metric-card.c-teal .m-val { color: var(--cyan); }
-.metric-card.c-blue .m-val { color: var(--blue); }
-.metric-card.c-em   .m-val { color: var(--emerald); }
-.metric-card.c-amb  .m-val { color: var(--amber); }
-
-.m-lbl {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--white-4);
-  text-transform: uppercase;
-  letter-spacing: .07em;
+/* Etiqueta de sección */
+.inf-section-label {
+  font-size: 9px; font-weight: 700; color: var(--white-4);
+  text-transform: uppercase; letter-spacing: .10em;
+  padding: 8px 18px 4px;
+  display: flex; align-items: center; gap: 7px;
 }
+.inf-section-label i { color: var(--cyan); font-size: 9px; }
 
-.res-table-wrap {
-  padding: 0 16px 10px;
-  overflow-x: auto;
-}
-
-.res-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-  margin-top: 8px;
-}
-
+/* Tabla detallada */
+.res-table-wrap { padding: 0 14px 10px; overflow-x: auto; }
+.res-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .res-table th {
-  background: var(--bg-3);
-  padding: 5px 8px;
-  text-align: left;
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--white-4);
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-4); padding: 6px 10px; text-align: center;
+  font-size: 9px; font-weight: 700; color: var(--white-3);
+  text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1px solid var(--border-2);
+  white-space: nowrap;
 }
-
+.res-table th small { display: block; font-size: 8px; color: var(--white-5); font-weight: 600; letter-spacing: .04em; margin-top: 1px; text-transform: none; }
+.res-table th:first-child { text-align: left; }
 .res-table td {
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
-  color: var(--white-2);
-  font-family: var(--mono);
-  font-size: 11px;
+  padding: 6px 10px; border-bottom: 1px solid var(--border);
+  color: var(--white-2); font-family: var(--mono); font-size: 11px;
+  text-align: center;
 }
-
+.res-table td:first-child { text-align: left; }
 .res-table tr:last-child td { border-bottom: none; }
-.res-table tr:hover td { background: var(--bg-4); }
-
-.td-tat { color: var(--cyan); font-weight: 700; }
-.td-wt  { color: #26c6da; font-weight: 700; }
-
-/* ════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════ */
-.toast {
-  position: fixed;
-  bottom: 20px; right: 20px;
-  padding: 10px 16px;
-  border-radius: var(--r-lg);
-  font-size: 13px;
-  font-weight: 600;
-  z-index: 9999;
-  pointer-events: none;
-  animation: toastIn .3s cubic-bezier(.34,1.4,.64,1);
-  max-width: 300px;
-  backdrop-filter: blur(20px);
+.res-table tbody tr:hover td { background: var(--bg-4); }
+.res-table tfoot td {
+  background: var(--bg-4); border-top: 2px solid var(--border-2);
+  font-weight: 700; font-size: 11px; color: var(--white-3);
+  padding: 6px 10px;
 }
+.td-tat  { color: var(--cyan)  !important; font-weight: 700; }
+.td-wt   { color: #26c6da     !important; font-weight: 700; }
+.td-rt   { color: #ab47bc     !important; font-weight: 700; }
+.td-best { background: rgba(102,187,106,.10) !important; }
 
+/* Fórmulas */
+.inf-formulas {
+  padding: 10px 18px 14px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.inf-formula-chip {
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 5px 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--white-3);
+  white-space: nowrap;
+}
+.inf-formula-chip b { color: var(--cyan); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  padding: 10px 16px; border-radius: var(--r-lg);
+  font-size: 13px; font-weight: 600; z-index: 9999;
+  pointer-events: none; max-width: 300px;
+  backdrop-filter: blur(20px);
+  animation: toastIn .3s cubic-bezier(.34,1.4,.64,1);
+}
 @keyframes toastIn {
   from { transform: translateY(20px) scale(.9); opacity: 0; }
   to   { transform: translateY(0) scale(1); opacity: 1; }
 }
-
 .toast.ok   { background: rgba(0,137,123,.12); border: 1px solid rgba(0,137,123,.3); color: var(--cyan); }
-.toast.warn { background: rgba(38,166,154,.1); border: 1px solid rgba(38,166,154,.3); color: #00796b; }
-.toast.err  { background: rgba(239,83,80,.1); border: 1px solid rgba(239,83,80,.3); color: var(--red); }
+.toast.warn { background: rgba(38,166,154,.1);  border: 1px solid rgba(38,166,154,.3); color: #00796b; }
+.toast.err  { background: rgba(239,83,80,.1);   border: 1px solid rgba(239,83,80,.3);  color: var(--red); }
 
-/* ════════════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════════════ */
+/* ── RESPONSIVE ── */
 @media (max-width: 860px) {
   html, body { overflow: auto; }
   .app { height: auto; }
   .body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; overflow: auto; }
-  .left { max-height: none; border-right: none; border-bottom: 1px solid var(--border); overflow: visible; }
+  .left { max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
   .right { height: 60vh; }
 }
-
 @media (max-width: 520px) {
   .input-grid { grid-template-columns: 1fr 1fr; }
   .input-grid .field:first-child { grid-column: span 2; }
-  .btn-add { grid-column: span 2; justify-content: center; }
+  .btn-add { grid-column: span 2; }
 }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ══ TOPBAR ══════════════════════════════ -->
   <header class="topbar">
     <div class="brand">
       <div class="brand-icon"><i class="fa fa-microchip"></i></div>
       <span class="brand-name">CPU <span>Proceso Dinámico</span></span>
     </div>
     <div class="topbar-chips">
-      <div class="chip chip-cyan">
-        <i class="fa fa-circle-dot"></i>
-        <span id="chip-algo">FCFS</span>
-      </div>
-      <div class="chip chip-purple">
-        <i class="fa fa-layer-group"></i>
-        <span id="chip-count">0 procesos</span>
-      </div>
+      <div class="chip chip-cyan"><i class="fa fa-circle-dot"></i><span id="chip-algo">FCFS</span></div>
+      <div class="chip" id="chip-type" style="border:1px solid rgba(0,137,123,.3);background:rgba(0,137,123,.08);color:var(--cyan)"><i class="fa fa-lock" id="chip-type-icon"></i><span id="chip-type-txt">No Expulsivo</span></div>
+      <div class="chip chip-purple"><i class="fa fa-layer-group"></i><span id="chip-count">0 procesos</span></div>
     </div>
   </header>
 
-  <!-- ══ BODY ════════════════════════════════ -->
   <div class="body">
-
-    <!-- ══ LEFT ════════════════════════════ -->
     <aside class="left">
 
-      <!-- ── ALGORITMO ──────────────────── -->
       <div class="section">
         <div class="section-title"><i class="fa fa-sliders"></i> Política de Planificación</div>
-
         <div class="algo-row">
           <button class="algo-btn active" id="btn-fcfs" onclick="selectAlgo('FCFS')">
             <div class="check"><i class="fa fa-check"></i></div>
             <div class="algo-name">FCFS</div>
             <div class="algo-full">First Come First Served</div>
+            <div class="badge-noexp"><i class="fa fa-lock"></i> No Expulsivo</div>
           </button>
           <button class="algo-btn" id="btn-spn" onclick="selectAlgo('SPN')">
             <div class="check"><i class="fa fa-check"></i></div>
             <div class="algo-name">SPN</div>
             <div class="algo-full">Shortest Process Next</div>
+            <div class="badge-noexp"><i class="fa fa-lock"></i> No Expulsivo</div>
           </button>
         </div>
-
+        <div class="algo-row">
+          <button class="algo-btn" id="btn-srt" onclick="selectAlgo('SRT')">
+            <div class="check"><i class="fa fa-check"></i></div>
+            <div class="algo-name" style="color:#ab47bc">SRT</div>
+            <div class="algo-full">Shortest Remaining Time</div>
+            <div class="badge-exp"><i class="fa fa-bolt"></i> Expulsivo</div>
+          </button>
+          <button class="algo-btn" id="btn-rr" onclick="selectAlgo('RR')">
+            <div class="check"><i class="fa fa-check"></i></div>
+            <div class="algo-name" style="color:#ff7043">RR</div>
+            <div class="algo-full">Round Robin</div>
+            <div class="badge-exp"><i class="fa fa-bolt"></i> Expulsivo</div>
+          </button>
+        </div>
+        <div class="quantum-row" id="quantum-row">
+          <div class="field">
+            <label>Quantum (q)</label>
+            <input type="number" id="rr-quantum" placeholder="2" min="1" value="2"/>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;padding-bottom:2px">
+            <small style="color:var(--white-4);font-size:11px;line-height:1.4">Cada proceso recibe<br>máx. <b style="color:#ff7043">q</b> unidades de CPU.</small>
+          </div>
+        </div>
         <div class="algo-desc-box" id="algo-desc">
           <b>FCFS:</b> Los procesos se atienden en el orden en que llegan. Simple y justo en llegada, pero puede generar el <em>efecto convoy</em> si un proceso largo bloquea al resto.
         </div>
       </div>
 
-      <!-- ── ENTRADA DE DATOS ───────────── -->
       <div class="section">
         <div class="section-title"><i class="fa fa-plus-circle"></i> Agregar Proceso</div>
-
         <div class="input-grid">
           <div class="field">
             <label>Nombre</label>
@@ -1167,9 +719,8 @@ input[type=range]::-webkit-slider-thumb {
             <input type="number" id="p-bt" placeholder="4" min="1" onkeydown="if(event.key==='Enter')addProcess()"/>
           </div>
         </div>
-        <button class="btn-add" onclick="addProcess()" style="margin-bottom:10px"><i class="fa fa-plus"></i> Añadir Proceso</button>
-
-        <label class="file-drop" id="fileDrop" for="fileInput">
+        <button class="btn-add" onclick="addProcess()"><i class="fa fa-plus"></i> Añadir Proceso</button>
+        <label class="file-drop" for="fileInput">
           <input type="file" accept=".txt,.csv" id="fileInput" onchange="loadFile(event)" style="display:none"/>
           <i class="fa fa-cloud-arrow-up"></i>
           <strong>Cargar TXT / CSV</strong>
@@ -1177,7 +728,6 @@ input[type=range]::-webkit-slider-thumb {
         </label>
       </div>
 
-      <!-- ── COLA DE PROCESOS ───────────── -->
       <div class="section" style="flex:1">
         <div class="proc-header">
           <div class="section-title" style="margin:0;flex:1"><i class="fa fa-list"></i> Cola de Procesos</div>
@@ -1186,21 +736,16 @@ input[type=range]::-webkit-slider-thumb {
             <i class="fa fa-trash"></i> Limpiar
           </button>
         </div>
-
         <div id="empty-proc" class="empty-proc" style="margin-top:10px">
           <p>Sin procesos aún</p>
           <span>Agrega uno arriba o carga un archivo TXT/CSV</span>
         </div>
-
         <div id="table-wrap" style="display:none;margin-top:10px">
           <div class="proc-table-wrap">
             <table class="proc-table">
               <thead>
                 <tr>
-                  <th>Proceso</th>
-                  <th>T. Llegada</th>
-                  <th>T. Ejecución</th>
-                  <th></th>
+                  <th>Proceso</th><th>T. Llegada</th><th>T. Ejecución</th><th></th>
                 </tr>
               </thead>
               <tbody id="proc-tbody"></tbody>
@@ -1209,12 +754,9 @@ input[type=range]::-webkit-slider-thumb {
         </div>
       </div>
 
-      <!-- ── CONTROLES ──────────────────── -->
       <div class="section">
         <div class="sim-bar">
-          <button class="btn-run" onclick="runSimulation()">
-            <i class="fa fa-play"></i> Simular
-          </button>
+          <button class="btn-run" onclick="runSimulation()"><i class="fa fa-play"></i> Simular</button>
           <button class="btn-sec" id="pause-btn" onclick="togglePause()" style="display:none">
             <i class="fa fa-pause" id="pause-icon"></i>
             <span id="pause-text">Pausar</span>
@@ -1232,27 +774,17 @@ input[type=range]::-webkit-slider-thumb {
 
     </aside>
 
-    <!-- ══ RIGHT ═══════════════════════════ -->
     <div class="right">
-
-      <!-- Gantt header -->
       <div class="right-header">
-        <div class="right-title">
-          <i class="fa fa-chart-gantt"></i>
-          Diagrama de Gantt — Tiempo real
-        </div>
+        <div class="right-title"><i class="fa fa-chart-gantt"></i> Diagrama de Gantt — Tiempo real</div>
         <div class="status-pill" id="status-pill">
           <div class="s-dot"></div>
           <span id="status-txt">Esperando simulación</span>
         </div>
       </div>
 
-      <!-- Metrics top bar (shown after simulation) -->
-      <div class="metrics-top" id="metrics-top">
-        <!-- filled by JS -->
-      </div>
+      <div class="metrics-top" id="metrics-top"></div>
 
-      <!-- Gantt canvas -->
       <div class="gantt-area" id="gantt-area">
         <div class="gantt-empty" id="gantt-empty">
           <svg width="110" height="80" viewBox="0 0 110 80" fill="none">
@@ -1269,125 +801,125 @@ input[type=range]::-webkit-slider-thumb {
         <div id="gantt-wrap" style="display:none"></div>
       </div>
 
-      <!-- Results panel -->
       <div class="results-area" id="results-area">
-        <div class="results-header">
-          <div class="results-title">
-            <i class="fa fa-table-list"></i>
-            Resultados y Métricas
-          </div>
+
+        <!-- ── CABECERA DEL INFORME ── -->
+        <div class="inf-header">
+          <div class="inf-title"><i class="fa fa-file-chart-column"></i> Informe de Planificación</div>
+          <div class="inf-meta" id="inf-meta"></div>
         </div>
-        <div class="metrics-row" id="metrics-row"></div>
+
+        <!-- ── TARJETAS DE RESUMEN ── -->
+        <div class="inf-cards" id="inf-cards"></div>
+
+        <!-- ── TABLA DETALLADA ── -->
+        <div class="inf-section-label"><i class="fa fa-table-list"></i> Detalle por Proceso</div>
         <div class="res-table-wrap">
           <table class="res-table">
             <thead>
               <tr>
                 <th>Proceso</th>
-                <th>T. Llegada</th>
-                <th>T. Ejecución</th>
-                <th>T. Inicio</th>
-                <th>T. Finalización</th>
-                <th>T. Retorno</th>
-                <th>T. Espera</th>
+                <th title="Tiempo de llegada">T. Llegada<br><small>AT</small></th>
+                <th title="Tiempo de ráfaga / ejecución total">T. Ráfaga<br><small>BT</small></th>
+                <th title="Primer instante en que el proceso usa CPU">T. Inicio<br><small>ST</small></th>
+                <th title="Instante en que el proceso termina">T. Fin<br><small>CT</small></th>
+                <th title="Turnaround = CT - AT">T. Retorno<br><small>TAT</small></th>
+                <th title="Waiting = TAT - BT">T. Espera<br><small>WT</small></th>
+                <th title="Response = ST - AT">T. Respuesta<br><small>RT</small></th>
               </tr>
             </thead>
             <tbody id="res-tbody"></tbody>
+            <tfoot id="res-tfoot"></tfoot>
           </table>
         </div>
-      </div>
 
-    </div><!-- /right -->
-  </div><!-- /body -->
-</div><!-- /app -->
+        <!-- ── FÓRMULAS ── -->
+        <div class="inf-formulas" id="inf-formulas"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-// ── ESTADO ───────────────────────────────────
-let processes = [];
-let algo      = 'FCFS';
-let schedule  = [];
-let metrics   = [];
-let stepIndex = 0;
-let simRunning= false;
-let simPaused = false;
-let simTimer  = null;
+// ── ESTADO ──
+let processes = [], algo = 'FCFS', schedule = [], metrics = [];
+let stepIndex = 0, simRunning = false, simPaused = false, simTimer = null;
 
 const COLORS = [
   '#00897b','#26c6da','#ef5350','#ab47bc','#ff7043',
   '#29b6f6','#66bb6a','#ffa726','#ec407a','#5c6bc0',
   '#26a69a','#d4e157','#8d6e63','#42a5f5','#ff8a65',
-  '#9ccc65','#ffca28','#00bcd4','#7e57c2','#78909c',
-  '#00acc1','#8bc34a','#ffd54f','#ff8a80','#40c4ff',
-  '#f06292','#4caf50','#ff9800','#9c27b0','#03a9f4',
-  '#e91e63','#cddc39','#795548','#607d8b','#f44336',
-  '#3f51b5','#009688','#ff5722','#673ab7','#2196f3',
-  '#4db6ac','#aed581','#ffb74d','#f48fb1','#90caf9',
-  '#ce93d8','#a5d6a7','#fff176','#ffcc80','#80cbc4',
-  '#80deea','#b39ddb','#bcaaa4','#eeeeee','#e0e0e0',
-  '#c5e1a5','#ffe082','#ef9a9a','#80cbc4','#b0bec5'
+  '#9ccc65','#ffca28','#00bcd4','#7e57c2','#78909c'
 ];
-// For processes beyond palette, generate via HSL
-function getColor(index) {
-  if (index < COLORS.length) return COLORS[index];
-  const hue = (index * 47) % 360;
-  return `hsl(${hue}, 70%, 55%)`;
+
+function getColor(i) {
+  return i < COLORS.length ? COLORS[i] : `hsl(${(i * 47) % 360}, 70%, 55%)`;
 }
 
-// ── ALGORITMO ────────────────────────────────
+// ── ALGORITMO ──
 function selectAlgo(a) {
   algo = a;
-  document.getElementById('btn-fcfs').classList.toggle('active', a==='FCFS');
-  document.getElementById('btn-spn').classList.toggle('active',  a==='SPN');
+  ['FCFS','SPN','SRT','RR'].forEach(x => {
+    const btn = document.getElementById('btn-' + x.toLowerCase());
+    if (btn) btn.classList.toggle('active', x === a);
+  });
   document.getElementById('chip-algo').textContent = a;
-  document.getElementById('algo-desc').innerHTML = a === 'FCFS'
-    ? '<b>FCFS:</b> Los procesos se atienden en el orden en que llegan. Simple y justo en llegada, pero puede generar el <em>efecto convoy</em> si un proceso largo bloquea al resto.'
-    : '<b>SPN:</b> Se ejecuta el proceso disponible con la menor ráfaga. Minimiza el tiempo de espera promedio, pero puede causar <em>inanición</em> en procesos largos.';
+  document.getElementById('quantum-row').classList.toggle('visible', a === 'RR');
+
+  // Update topbar preemptive chip dynamically
+  const chipType    = document.getElementById('chip-type');
+  const chipTypeTxt = document.getElementById('chip-type-txt');
+  const chipTypeIcon= document.getElementById('chip-type-icon');
+  const isExp = (a === 'SRT' || a === 'RR');
+  chipTypeTxt.textContent = isExp ? 'Expulsivo' : 'No Expulsivo';
+  chipTypeIcon.className  = isExp ? 'fa fa-bolt' : 'fa fa-lock';
+  chipType.style.border      = isExp ? '1px solid rgba(255,112,67,.35)' : '1px solid rgba(0,137,123,.3)';
+  chipType.style.background  = isExp ? 'rgba(255,112,67,.10)'           : 'rgba(0,137,123,.08)';
+  chipType.style.color       = isExp ? '#ff7043'                         : 'var(--cyan)';
+
+  const descs = {
+    FCFS: '<b>FCFS:</b> Los procesos se atienden en el orden en que llegan. Simple y justo en llegada, pero puede generar el <em>efecto convoy</em> si un proceso largo bloquea al resto.',
+    SPN:  '<b>SPN:</b> Se ejecuta el proceso disponible con la menor ráfaga. Minimiza el tiempo de espera promedio, pero puede causar <em>inanición</em> en procesos largos.',
+    SRT:  '<b>SRT ⚡ Expulsivo:</b> Versión expulsiva de SPN. Si llega un proceso con menor tiempo restante, <em>expulsa</em> al proceso actual. Minimiza el tiempo de retorno promedio.',
+    RR:   '<b>RR ⚡ Expulsivo:</b> Cada proceso recibe un <em>quantum</em> de CPU y luego cede el control. Equitativo y sin inanición, pero con mayor sobrecarga por cambio de contexto.'
+  };
+  document.getElementById('algo-desc').innerHTML = descs[a] || '';
   resetSim(true);
 }
 
-// ── PROCESOS ─────────────────────────────────
+// ── PROCESOS ──
 function addProcess() {
-  const name = document.getElementById('p-name').value.trim() || `P${processes.length+1}`;
+  const name = document.getElementById('p-name').value.trim() || `P${processes.length + 1}`;
   const at   = parseInt(document.getElementById('p-at').value) || 0;
   const bt   = parseInt(document.getElementById('p-bt').value);
   if (!bt || bt < 1) { toast('El tiempo de ejecución debe ser ≥ 1', 'warn'); return; }
   if (processes.find(p => p.name === name)) { toast(`"${name}" ya existe`, 'warn'); return; }
   processes.push({ name, at, bt });
   document.getElementById('p-name').value = '';
-  document.getElementById('p-at').value  = '';
-  document.getElementById('p-bt').value  = '';
+  document.getElementById('p-at').value   = '';
+  document.getElementById('p-bt').value   = '';
   document.getElementById('p-name').focus();
   renderTable();
   toast(`${name} agregado (Llegada=${at}, Ejecución=${bt})`, 'ok');
 }
 
-function removeProcess(i) {
-  processes.splice(i, 1);
-  renderTable();
-}
+function removeProcess(i) { processes.splice(i, 1); renderTable(); }
 
-function clearAll() {
-  processes = [];
-  renderTable();
-  resetSim(true);
-}
+function clearAll() { processes = []; renderTable(); resetSim(true); }
 
 function loadFile(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const lines = ev.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    const lines = ev.target.result.split('\n').map(l => l.trim()).filter(Boolean);
     let added = 0;
     lines.forEach(line => {
       const parts = line.split(/[,;\t ]+/);
       if (parts.length >= 3) {
-        const name = parts[0].trim();
-        const at   = parseInt(parts[1]) || 0;
-        const bt   = parseInt(parts[2]);
-        if (bt && bt >= 1 && !processes.find(p=>p.name===name)) {
-          processes.push({ name, at, bt });
-          added++;
-        }
+        const name = parts[0].trim(), at = parseInt(parts[1]) || 0, bt = parseInt(parts[2]);
+        if (bt >= 1 && !processes.find(p => p.name === name)) { processes.push({ name, at, bt }); added++; }
       }
     });
     renderTable();
@@ -1398,40 +930,33 @@ function loadFile(e) {
 }
 
 // Drag & drop
-const fileDrop = document.getElementById('fileDrop');
-fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.style.borderColor='var(--cyan)'; });
-fileDrop.addEventListener('dragleave', () => { fileDrop.style.borderColor=''; });
+const fileDrop = document.querySelector('.file-drop');
+fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.style.borderColor = 'var(--cyan)'; });
+fileDrop.addEventListener('dragleave', ()  => { fileDrop.style.borderColor = ''; });
 fileDrop.addEventListener('drop', e => {
-  e.preventDefault();
-  fileDrop.style.borderColor = '';
+  e.preventDefault(); fileDrop.style.borderColor = '';
   const file = e.dataTransfer.files[0];
-  if (!file) return;
-  loadFile({ target: { files: [file], value: '' } });
+  if (file) loadFile({ target: { files: [file], value: '' } });
 });
 
-// ── RENDER TABLA ─────────────────────────────
+// ── RENDER TABLA ──
 function renderTable() {
   const n = processes.length;
   document.getElementById('proc-count-lbl').textContent = n === 1 ? '1 proceso' : `${n} procesos`;
   document.getElementById('chip-count').textContent     = n === 1 ? '1 proceso' : `${n} procesos`;
   document.getElementById('empty-proc').style.display   = n ? 'none' : '';
   document.getElementById('table-wrap').style.display   = n ? '' : 'none';
-
-  document.getElementById('proc-tbody').innerHTML = processes.map((p, i) => {
-    const c = getColor(i);
-    return `<tr>
-      <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${p.name}</span></td>
-      <td>${p.at}</td>
-      <td>${p.bt}</td>
-      <td><button class="del-btn" onclick="removeProcess(${i})" title="Eliminar"><i class="fa fa-xmark"></i></button></td>
-    </tr>`;
-  }).join('');
+  document.getElementById('proc-tbody').innerHTML = processes.map((p, i) => `
+    <tr>
+      <td><span class="p-dot" style="background:${getColor(i)}"></span><span class="p-name">${p.name}</span></td>
+      <td>${p.at}</td><td>${p.bt}</td>
+      <td><button class="del-btn" onclick="removeProcess(${i})"><i class="fa fa-xmark"></i></button></td>
+    </tr>`).join('');
 }
 
-// ══ ALGORITMOS ══════════════════════════════
-
+// ── ALGORITMOS ──
 function computeFCFS(procs) {
-  const sorted = [...procs].sort((a,b) => a.at !== b.at ? a.at-b.at : procs.indexOf(a)-procs.indexOf(b));
+  const sorted = [...procs].sort((a, b) => a.at !== b.at ? a.at - b.at : procs.indexOf(a) - procs.indexOf(b));
   const sched = []; let t = 0;
   for (const p of sorted) {
     if (t < p.at) t = p.at;
@@ -1443,69 +968,138 @@ function computeFCFS(procs) {
 
 function computeSPN(procs) {
   const ps = procs.map(p => ({ ...p, done: false }));
-  const sched = []; let t = 0; let done = 0;
+  const sched = []; let t = 0, done = 0;
   while (done < ps.length) {
     const avail = ps.filter(p => !p.done && p.at <= t);
-    if (!avail.length) { t = Math.min(...ps.filter(p=>!p.done).map(p=>p.at)); continue; }
-    const chosen = avail.reduce((a,b) => a.bt < b.bt ? a : a.bt === b.bt && a.at <= b.at ? a : b);
+    if (!avail.length) { t = Math.min(...ps.filter(p => !p.done).map(p => p.at)); continue; }
+    const chosen = avail.reduce((a, b) => a.bt < b.bt ? a : a.bt === b.bt && a.at <= b.at ? a : b);
     sched.push({ name: chosen.name, start: t, end: t + chosen.bt });
-    t += chosen.bt;
-    chosen.done = true;
-    done++;
+    t += chosen.bt; chosen.done = true; done++;
   }
   return sched;
 }
 
 function buildMetrics(procs, sched) {
   return procs.map(p => {
-    const s = sched.find(x => x.name === p.name);
-    const tat = s.end - p.at;
-    const wt  = tat - p.bt;
-    return { name: p.name, at: p.at, bt: p.bt, start: s.start, ct: s.end, tat, wt };
+    const s   = sched.find(x => x.name === p.name);
+    const tat = s.end - p.at, wt = tat - p.bt, rt = s.start - p.at;
+    return { name: p.name, at: p.at, bt: p.bt, start: s.start, ct: s.end, tat, wt, rt };
   });
 }
 
-// ══ SIMULACIÓN ══════════════════════════════
+function computeSRT(procs) {
+  // Shortest Remaining Time — preemptive SPN
+  const ps = procs.map(p => ({ ...p, rem: p.bt, done: false }));
+  const sched = []; let t = 0, done = 0;
+  let lastSeg = null;
+  while (done < ps.length) {
+    const avail = ps.filter(p => !p.done && p.at <= t);
+    if (!avail.length) {
+      // Advance to next arrival
+      const next = Math.min(...ps.filter(p => !p.done).map(p => p.at));
+      if (lastSeg) { sched.push(lastSeg); lastSeg = null; }
+      t = next; continue;
+    }
+    const chosen = avail.reduce((a, b) => {
+      if (a.rem !== b.rem) return a.rem < b.rem ? a : b;
+      return a.at <= b.at ? a : b;
+    });
+    // Run for 1 tick
+    if (!lastSeg || lastSeg.name !== chosen.name) {
+      if (lastSeg) sched.push(lastSeg);
+      lastSeg = { name: chosen.name, start: t, end: t + 1 };
+    } else {
+      lastSeg.end = t + 1;
+    }
+    chosen.rem--;
+    t++;
+    if (chosen.rem === 0) { chosen.done = true; done++; if (lastSeg) { sched.push(lastSeg); lastSeg = null; } }
+  }
+  if (lastSeg) sched.push(lastSeg);
+  return sched;
+}
 
+function computeRR(procs, quantum) {
+  const ps = procs.map(p => ({ ...p, rem: p.bt, done: false, queued: false }));
+  const sched = []; let t = 0, done = 0;
+  const queue = [];
+
+  // Enqueue processes that arrive at t=0
+  ps.filter(p => p.at <= 0).forEach(p => { p.queued = true; queue.push(p); });
+
+  while (done < ps.length) {
+    if (!queue.length) {
+      const nxt = Math.min(...ps.filter(p => !p.done && !p.queued).map(p => p.at));
+      t = nxt;
+      ps.filter(p => !p.done && !p.queued && p.at <= t).forEach(p => { p.queued = true; queue.push(p); });
+      continue;
+    }
+    const cur = queue.shift();
+    const run = Math.min(cur.rem, quantum);
+    sched.push({ name: cur.name, start: t, end: t + run });
+    t += run;
+    cur.rem -= run;
+    // Enqueue newly arrived processes before re-queueing current
+    ps.filter(p => !p.done && !p.queued && p.at <= t).forEach(p => { p.queued = true; queue.push(p); });
+    if (cur.rem > 0) {
+      queue.push(cur);
+    } else {
+      cur.done = true; done++;
+    }
+  }
+  return sched;
+}
+
+function buildMetricsSRT_RR(procs, sched) {
+  return procs.map(p => {
+    const segs  = sched.filter(x => x.name === p.name);
+    const start = segs.length ? segs[0].start : 0;
+    const ct    = segs.length ? segs[segs.length-1].end : 0;
+    const tat   = ct - p.at;
+    const wt    = tat - p.bt;
+    const rt    = start - p.at;
+    return { name: p.name, at: p.at, bt: p.bt, start, ct, tat, wt, rt };
+  });
+}
+
+// ── SIMULACIÓN ──
 function runSimulation() {
   if (!processes.length) { toast('Agrega al menos un proceso primero', 'warn'); return; }
   resetSim(true);
 
-  schedule = algo === 'FCFS' ? computeFCFS(processes) : computeSPN(processes);
-  metrics  = buildMetrics(processes, schedule);
+  let quantum = parseInt(document.getElementById('rr-quantum').value) || 2;
+  if (algo === 'RR' && quantum < 1) { toast('El quantum debe ser ≥ 1', 'warn'); return; }
+
+  if      (algo === 'FCFS') { schedule = computeFCFS(processes); metrics = buildMetrics(processes, schedule); }
+  else if (algo === 'SPN')  { schedule = computeSPN(processes);  metrics = buildMetrics(processes, schedule); }
+  else if (algo === 'SRT')  { schedule = computeSRT(processes);  metrics = buildMetricsSRT_RR(processes, schedule); }
+  else if (algo === 'RR')   { schedule = computeRR(processes, quantum); metrics = buildMetricsSRT_RR(processes, schedule); }
 
   const totalTime = Math.max(...schedule.map(s => s.end));
-  stepIndex  = 0;
-  simRunning = true;
-  simPaused  = false;
-
+  stepIndex = 0; simRunning = true; simPaused = false;
   document.getElementById('gantt-empty').style.display = 'none';
   document.getElementById('gantt-wrap').style.display  = '';
   document.getElementById('pause-btn').style.display   = '';
   document.getElementById('reset-btn').style.display   = '';
   document.getElementById('results-area').classList.remove('visible');
-
+  const isPreemptive = (algo === 'SRT' || algo === 'RR');
+  window._simTick = 0;
   initGantt(totalTime);
-  setStatus('running', `Simulando ${algo}…`);
-  animateStep(totalTime);
+  const qLabel = algo === 'RR' ? ' (q='+quantum+')' : '';
+  setStatus('running', 'Simulando ' + algo + qLabel + '…');
+  if (isPreemptive) {
+    animateTickByTick(totalTime);
+  } else {
+    animateStep(totalTime);
+  }
 }
 
 function initGantt(totalTime) {
-  // Adaptive unit: much more compressed for 100 data
-  const unit = totalTime <= 30  ? 28
-             : totalTime <= 60  ? 16
-             : totalTime <= 120 ? 10
-             : totalTime <= 300 ? 6
-             : totalTime <= 600 ? 4
-             : 3;
-  const W = totalTime * unit;
+  const unit = totalTime <= 30 ? 28 : totalTime <= 60 ? 16 : totalTime <= 120 ? 10 : totalTime <= 300 ? 6 : totalTime <= 600 ? 4 : 3;
+  const W    = totalTime * unit;
+  window._gUnit = unit; window._gW = W;
 
-  window._gUnit = unit;
-  window._gW    = W;
-
-  // Build color map per process
   const procOrder = [...new Set(schedule.map(s => s.name))];
-  window._gOrder  = procOrder;
   const colorMap  = {};
   procOrder.forEach((name, i) => {
     const pi = processes.findIndex(p => p.name === name);
@@ -1513,35 +1107,31 @@ function initGantt(totalTime) {
   });
   window._gColorMap = colorMap;
 
-  // Legend
-  let legendHtml = '<div class="g-legend">';
-  procOrder.forEach(name => {
-    legendHtml += `<div class="g-legend-item"><div class="g-legend-dot" style="background:${colorMap[name]}"></div>${name}</div>`;
-  });
-  legendHtml += '</div>';
+  const legend = procOrder.map(name =>
+    `<div class="g-legend-item"><div class="g-legend-dot" style="background:${colorMap[name]}"></div>${name}</div>`
+  ).join('');
 
-  // Single track container
-  const trackHtml = `
-    <div style="position:relative">
-      <div class="g-single-track" id="g-track" style="width:${W}px;min-width:${W}px">
-        <div class="g-cursor" id="g-cursor"></div>
-      </div>
-    </div>`;
-
-  // Ticks
   const tickStep = totalTime <= 20 ? 1 : totalTime <= 60 ? 5 : totalTime <= 200 ? 10 : totalTime <= 500 ? 25 : 50;
-  let ticks = `<div class="g-ticks" style="width:${W}px;margin-left:0">`;
+  let ticks = `<div class="g-ticks" style="width:${W}px">`;
   for (let t = 0; t <= totalTime; t++) {
     if (t % tickStep === 0 || t === totalTime) {
-      const isMajor = t % (tickStep * 2) === 0 || t === 0 || t === totalTime;
-      ticks += `<span class="g-tick${isMajor ? ' g-tick-major' : ''}" style="left:${t * unit}px">${t}</span>`;
+      const major = t % (tickStep * 2) === 0 || t === 0 || t === totalTime;
+      ticks += `<span class="g-tick${major ? ' g-tick-major' : ''}" style="left:${t * unit}px">${t}</span>`;
     }
   }
   ticks += '</div>';
 
-  document.getElementById('gantt-wrap').innerHTML = legendHtml + trackHtml + ticks;
+  document.getElementById('gantt-wrap').innerHTML = `
+    <div class="g-legend">${legend}</div>
+    <div style="position:relative">
+      <div class="g-single-track" id="g-track" style="width:${W}px">
+        <div class="g-cursor" id="g-cursor"></div>
+      </div>
+    </div>
+    ${ticks}`;
 }
 
+// No-expulsivos: dibuja cada segmento completo de una vez con delay por segmento
 function animateStep(totalTime) {
   if (!simRunning) return;
   if (simPaused) { simTimer = setTimeout(() => animateStep(totalTime), 100); return; }
@@ -1549,56 +1139,94 @@ function animateStep(totalTime) {
 
   const step  = schedule[stepIndex];
   const unit  = window._gUnit;
-  const colorMap = window._gColorMap || {};
-
-  const c = colorMap[step.name] || getColor(0);
-
+  const color = (window._gColorMap || {})[step.name] || getColor(0);
   const track = document.getElementById('g-track');
   if (!track) { finishSim(); return; }
 
-  const left  = step.start * unit;
-  const width = (step.end - step.start) * unit;
-  
-  // Show text if less than 100 processes
-  const showText = schedule.length < 100;
-
   const seg = document.createElement('div');
   seg.className = 'g-seg';
-  seg.setAttribute('data-name', step.name);
-  seg.setAttribute('data-time', `[${step.start}→${step.end}]`);
-  if (showText) seg.setAttribute('data-showtext', 'true');
-  if (showText) seg.textContent = step.name;
-  seg.style.cssText = `left:${left}px;background:${c};box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer;`;
-  seg.title = `${step.name} | t=${step.start}→${step.end} | Duración=${step.end - step.start}`;
-  
-  // Click to show process info
-  seg.onclick = (e) => {
-    e.stopPropagation();
-    toast(`Proceso: ${step.name} | Tiempo: ${step.start}→${step.end}`, 'ok');
-  };
-  
+  seg.setAttribute('data-name', step.name + ' [' + step.start + '→' + step.end + ']');
+  seg.textContent = step.name;
+  seg.style.cssText = 'left:' + (step.start*unit) + 'px;background:' + color + ';box-shadow:inset 0 1px 0 rgba(255,255,255,.2);';
+  seg.title = step.name + ' | t=' + step.start + '→' + step.end + ' | Dur=' + (step.end-step.start);
+  seg.onclick = (function(s){ return function(e){ e.stopPropagation(); toast(s.name + ' · t=' + s.start + '→' + s.end, 'ok'); }; })(step);
   track.appendChild(seg);
 
   const cursor = document.getElementById('g-cursor');
-  if (cursor) {
-    cursor.style.opacity = '1';
-    cursor.style.left = left + 'px';
-  }
+  if (cursor) { cursor.style.opacity = '1'; cursor.style.left = step.start*unit+'px'; }
 
-  setStatus('running', `Ejecutando ${step.name} · t = ${step.start} → ${step.end}`);
-
-  // Update results table in real time
+  setStatus('running', 'Ejecutando ' + step.name + ' · t = ' + step.start + ' → ' + step.end);
   updateResultsInRealTime(stepIndex);
 
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    seg.style.width = width + 'px';
-    if (cursor) cursor.style.left = (step.end * unit) + 'px';
-  }));
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    seg.style.width = (step.end - step.start)*unit + 'px';
+    if (cursor) cursor.style.left = step.end*unit+'px';
+  }); });
 
   stepIndex++;
-  const speed = parseInt(document.getElementById('speed').value);
-  const delay = Math.max(80, 1200 - speed * 200);
-  simTimer = setTimeout(() => animateStep(totalTime), delay);
+  const spd = parseInt(document.getElementById('speed').value);
+  const delay = Math.max(300, 1800 - spd * 300);
+  simTimer = setTimeout(function(){ animateStep(totalTime); }, delay);
+}
+
+// Expulsivos: avanza 1 tick por paso — el segmento crece en pantalla tick a tick
+function animateTickByTick(totalTime) {
+  if (!simRunning) return;
+  if (simPaused) { simTimer = setTimeout(function(){ animateTickByTick(totalTime); }, 100); return; }
+
+  var t    = window._simTick;
+  var unit = window._gUnit;
+  if (t >= totalTime) { finishSim(); return; }
+
+  // Encontrar el segmento que cubre el tick t
+  var seg = null;
+  for (var i = 0; i < schedule.length; i++) {
+    if (schedule[i].start <= t && t < schedule[i].end) { seg = schedule[i]; break; }
+  }
+
+  if (!seg) {
+    // Tiempo idle
+    window._simTick++;
+    const spd = parseInt(document.getElementById('speed').value);
+    simTimer = setTimeout(function(){ animateTickByTick(totalTime); }, Math.max(80, 600 - spd*100));
+    return;
+  }
+
+  var color = (window._gColorMap || {})[seg.name] || getColor(0);
+  var track = document.getElementById('g-track');
+  if (!track) { finishSim(); return; }
+
+  var segId = 'gseg-' + seg.start + '-' + seg.name.replace(/[^a-z0-9]/gi,'_');
+  var domSeg = document.getElementById(segId);
+  if (!domSeg) {
+    domSeg = document.createElement('div');
+    domSeg.id = segId;
+    domSeg.className = 'g-seg';
+    domSeg.setAttribute('data-name', seg.name + ' [' + seg.start + '→' + seg.end + ']');
+    domSeg.textContent = seg.name;
+    domSeg.style.cssText = 'left:' + (seg.start*unit) + 'px;width:0px;background:' + color + ';box-shadow:inset 0 1px 0 rgba(255,255,255,.2);transition:none;';
+    domSeg.title = seg.name + ' | t=' + seg.start + '→' + seg.end;
+    (function(s){ domSeg.onclick = function(e){ e.stopPropagation(); toast(s.name + ' · t=' + s.start + '→' + s.end, 'ok'); }; })(seg);
+    track.appendChild(domSeg);
+  }
+
+  // Crecer el segmento 1 unidad
+  domSeg.style.width = (t - seg.start + 1)*unit + 'px';
+
+  // Mover cursor
+  var cursor = document.getElementById('g-cursor');
+  if (cursor) { cursor.style.opacity = '1'; cursor.style.left = (t+1)*unit+'px'; }
+
+  // Estado y métricas
+  var si = schedule.indexOf(seg);
+  stepIndex = si >= 0 ? si : stepIndex;
+  setStatus('running', 'Ejecutando ' + seg.name + ' · t = ' + t + ' → ' + (t+1));
+  updateResultsInRealTime(stepIndex);
+
+  window._simTick++;
+  const spd = parseInt(document.getElementById('speed').value);
+  var delay = Math.max(80, 600 - spd*100);
+  simTimer = setTimeout(function(){ animateTickByTick(totalTime); }, delay);
 }
 
 function finishSim() {
@@ -1610,56 +1238,154 @@ function finishSim() {
   renderResultsMetrics();
 }
 
+// ── INFORME FINAL ──
 function renderResultsMetrics() {
-  const n      = metrics.length;
-  const avgTAT = (metrics.reduce((s,m)=>s+m.tat,0)/n).toFixed(2);
-  const avgWT  = (metrics.reduce((s,m)=>s+m.wt, 0)/n).toFixed(2);
-  const totalT = Math.max(...schedule.map(s=>s.end));
-  const totalBT= processes.reduce((s,p)=>s+p.bt,0);
-  const cpuUse = ((totalBT/totalT)*100).toFixed(1);
+  const n   = metrics.length;
+  if (!n) return;
 
-  // Populate top metrics bar
-  const topBar = document.getElementById('metrics-top');
-  topBar.innerHTML = `
-    <div class="metric-top-card c-teal"><span class="mt-val">${avgTAT}</span><span class="mt-lbl">T. Retorno Prom.</span></div>
-    <div class="metric-top-card c-blue"><span class="mt-val">${avgWT}</span><span class="mt-lbl">T. Espera Prom.</span></div>
-    <div class="metric-top-card c-amb"><span class="mt-val">${n}</span><span class="mt-lbl">Procesos</span></div>`;
-  topBar.classList.add('visible');
+  const totalTime  = Math.max(...schedule.map(s => s.end));
+  const firstStart = Math.min(...schedule.map(s => s.start));
+  const span       = totalTime - firstStart;
 
-  // Keep metrics-row filled (hidden via CSS, for compatibility)
-  document.getElementById('metrics-row').innerHTML = `
-    <div class="metric-card c-teal"><div class="m-val">${avgTAT}</div><div class="m-lbl">T. Retorno Prom.</div></div>
-    <div class="metric-card c-blue"><div class="m-val">${avgWT}</div><div class="m-lbl">T. Espera Prom.</div></div>
-    <div class="metric-card c-em"><div class="m-val">${cpuUse}%</div><div class="m-lbl">Uso CPU</div></div>
-    <div class="metric-card c-amb"><div class="m-val">${n}</div><div class="m-lbl">Procesos</div></div>`;
+  const sumTAT = metrics.reduce((s, m) => s + m.tat, 0);
+  const sumWT  = metrics.reduce((s, m) => s + m.wt,  0);
+  const sumRT  = metrics.reduce((s, m) => s + m.rt,  0);
+
+  const avgTAT = (sumTAT / n).toFixed(2);
+  const avgWT  = (sumWT  / n).toFixed(2);
+  const avgRT  = (sumRT  / n).toFixed(2);
+
+  // CPU utilization: sum of burst times / total span
+  const totalBurst = metrics.reduce((s, m) => s + m.bt, 0);
+  const cpuUtil    = span > 0 ? ((totalBurst / span) * 100).toFixed(1) : '100.0';
+  // Throughput: processes / total time span
+  const throughput = span > 0 ? (n / span).toFixed(3) : n.toFixed(3);
+
+  // Meta tags
+  const isExp = (algo === 'SRT' || algo === 'RR');
+  const quantum = parseInt(document.getElementById('rr-quantum').value) || 2;
+  let metaHtml = `<span class="inf-tag inf-tag-algo"><i class="fa fa-microchip"></i>${algo}${algo==='RR'?' (q='+quantum+')':''}</span>`;
+  metaHtml    += isExp
+    ? `<span class="inf-tag inf-tag-exp"><i class="fa fa-bolt"></i>Expulsivo</span>`
+    : `<span class="inf-tag inf-tag-noexp"><i class="fa fa-lock"></i>No Expulsivo</span>`;
+  metaHtml    += `<span class="inf-tag inf-tag-n"><i class="fa fa-layer-group"></i>${n} proceso${n>1?'s':''}</span>`;
+  document.getElementById('inf-meta').innerHTML = metaHtml;
+
+  // Summary cards
+  document.getElementById('inf-cards').innerHTML = `
+    <div class="inf-card c-teal">
+      <span class="inf-card-val">${avgTAT}</span>
+      <span class="inf-card-lbl">T. Retorno Prom.</span>
+      <span class="inf-card-sub">Avg TAT</span>
+    </div>
+    <div class="inf-card c-blue">
+      <span class="inf-card-val">${avgWT}</span>
+      <span class="inf-card-lbl">T. Espera Prom.</span>
+      <span class="inf-card-sub">Avg WT</span>
+    </div>
+    <div class="inf-card c-purp">
+      <span class="inf-card-val">${avgRT}</span>
+      <span class="inf-card-lbl">T. Respuesta Prom.</span>
+      <span class="inf-card-sub">Avg RT</span>
+    </div>
+    <div class="inf-card c-gree">
+      <span class="inf-card-val">${cpuUtil}%</span>
+      <span class="inf-card-lbl">Uso de CPU</span>
+      <span class="inf-card-sub">CPU Util.</span>
+    </div>
+    <div class="inf-card c-oran">
+      <span class="inf-card-val">${throughput}</span>
+      <span class="inf-card-lbl">Rendimiento</span>
+      <span class="inf-card-sub">proc / u.t.</span>
+    </div>
+    <div class="inf-card c-yell">
+      <span class="inf-card-val">${totalTime}</span>
+      <span class="inf-card-lbl">Tiempo Total</span>
+      <span class="inf-card-sub">Makespan</span>
+    </div>`;
+
+  // Find best (min) values to highlight
+  const minTAT = Math.min(...metrics.map(m => m.tat));
+  const minWT  = Math.min(...metrics.map(m => m.wt));
+  const minRT  = Math.min(...metrics.map(m => m.rt));
+
+  // Detail table rows
+  document.getElementById('res-tbody').innerHTML = metrics.map(m => {
+    const ci = processes.findIndex(p => p.name === m.name);
+    return `<tr>
+      <td><span class="p-dot" style="background:${getColor(ci)}"></span><span class="p-name">${m.name}</span></td>
+      <td>${m.at}</td>
+      <td>${m.bt}</td>
+      <td>${m.start}</td>
+      <td>${m.ct}</td>
+      <td class="td-tat${m.tat===minTAT?' td-best':''}">${m.tat}</td>
+      <td class="td-wt${m.wt===minWT?' td-best':''}">${m.wt}</td>
+      <td class="td-rt${m.rt===minRT?' td-best':''}">${m.rt}</td>
+    </tr>`;
+  }).join('');
+
+  // Footer with averages
+  document.getElementById('res-tfoot').innerHTML = `
+    <tr>
+      <td colspan="5" style="text-align:right;color:var(--white-4);font-size:9px;text-transform:uppercase;letter-spacing:.06em">Promedio</td>
+      <td class="td-tat">${avgTAT}</td>
+      <td class="td-wt">${avgWT}</td>
+      <td class="td-rt">${avgRT}</td>
+    </tr>`;
+
+  // Formulas
+  document.getElementById('inf-formulas').innerHTML = `
+    <div class="inf-section-label" style="padding:0 0 4px;border:none"><i class="fa fa-function"></i> Fórmulas aplicadas</div>
+    <div class="inf-formula-chip"><b>TAT</b> = CT − AT</div>
+    <div class="inf-formula-chip"><b>WT</b> = TAT − BT</div>
+    <div class="inf-formula-chip"><b>RT</b> = ST − AT</div>
+    <div class="inf-formula-chip"><b>CPU Util.</b> = Σ BT / Makespan × 100</div>
+    <div class="inf-formula-chip"><b>Throughput</b> = N / Makespan</div>
+    <div class="inf-formula-chip" style="color:var(--white-5);font-size:9px">AT=Llegada · BT=Ráfaga · ST=Inicio · CT=Fin</div>`;
 }
 
+// ── ACTUALIZACIÓN EN TIEMPO REAL (durante animación) ──
 function updateResultsInRealTime(currentStep) {
-  // Show results area early
   document.getElementById('results-area').classList.add('visible');
-  
-  const tbody = document.getElementById('res-tbody');
-  const scheduledSoFar = schedule.slice(0, currentStep + 1);
-  const processesCompleted = [...new Set(scheduledSoFar.map(s => s.name))];
-  
-  // Build rows for completed processes
-  let html = '';
-  metrics.forEach((m, i) => {
-    if (processesCompleted.includes(m.name)) {
-      const c = getColor(i);
-      html += `<tr>
-        <td><span class="p-dot" style="background:${c}"></span><span class="p-name">${m.name}</span></td>
-        <td>${m.at}</td><td>${m.bt}</td><td>${m.start}</td><td>${m.ct}</td>
-        <td class="td-tat">${m.tat}</td>
-        <td class="td-wt">${m.wt}</td>
+
+  const seenNames = new Set();
+  for (let i = 0; i <= currentStep; i++) seenNames.add(schedule[i].name);
+
+  // Only show processes that have started; RT/TAT/WT shown as partial if still running
+  const completedSet = new Set(
+    schedule.filter((s, i) => i <= currentStep && !schedule.slice(i+1).some(x => x.name === s.name))
+            .map(s => s.name)
+  );
+
+  document.getElementById('res-tbody').innerHTML = metrics
+    .filter(m => seenNames.has(m.name))
+    .map(m => {
+      const ci   = processes.findIndex(p => p.name === m.name);
+      const done = completedSet.has(m.name);
+      return `<tr>
+        <td><span class="p-dot" style="background:${getColor(ci)}"></span><span class="p-name">${m.name}</span></td>
+        <td>${m.at}</td>
+        <td>${m.bt}</td>
+        <td>${m.start}</td>
+        <td>${done ? m.ct : '<span style="color:var(--white-5)">…</span>'}</td>
+        <td class="td-tat">${done ? m.tat : '<span style="color:var(--white-5)">…</span>'}</td>
+        <td class="td-wt">${done ? m.wt  : '<span style="color:var(--white-5)">…</span>'}</td>
+        <td class="td-rt">${m.rt}</td>
       </tr>`;
-    }
-  });
-  tbody.innerHTML = html;
-  
-  // Scroll to bottom
-  const resultsArea = document.getElementById('results-area');
-  setTimeout(() => { resultsArea.scrollTop = resultsArea.scrollHeight; }, 10);
+    }).join('');
+
+  document.getElementById('res-tfoot').innerHTML = '';
+  document.getElementById('inf-cards').innerHTML = '';
+  document.getElementById('inf-formulas').innerHTML = '';
+
+  // Show meta tags while running
+  const isExp = (algo === 'SRT' || algo === 'RR');
+  const quantum = parseInt(document.getElementById('rr-quantum').value) || 2;
+  let metaHtml = `<span class="inf-tag inf-tag-algo"><i class="fa fa-microchip"></i>${algo}${algo==='RR'?' (q='+quantum+')':''}</span>`;
+  metaHtml    += isExp
+    ? `<span class="inf-tag inf-tag-exp"><i class="fa fa-bolt"></i>Expulsivo</span>`
+    : `<span class="inf-tag inf-tag-noexp"><i class="fa fa-lock"></i>No Expulsivo</span>`;
+  document.getElementById('inf-meta').innerHTML = metaHtml;
 }
 
 function togglePause() {
@@ -1672,10 +1398,8 @@ function togglePause() {
 
 function resetSim(silent = false) {
   clearTimeout(simTimer);
-  simRunning = simPaused = false;
-  stepIndex  = 0;
-  schedule   = [];
-  metrics    = [];
+  simRunning = simPaused = false; stepIndex = 0; schedule = []; metrics = [];
+  window._simTick = 0;
   document.getElementById('pause-btn').style.display   = 'none';
   document.getElementById('reset-btn').style.display   = 'none';
   document.getElementById('gantt-wrap').style.display  = 'none';
@@ -1686,25 +1410,20 @@ function resetSim(silent = false) {
   if (!silent) setStatus('idle', 'Esperando simulación');
 }
 
-function updateSpeed() {
-  document.getElementById('speed-val').textContent = '×' + document.getElementById('speed').value;
-}
+function updateSpeed() { document.getElementById('speed-val').textContent = '×' + document.getElementById('speed').value; }
 
 function setStatus(state, txt) {
   const pill = document.getElementById('status-pill');
   const span = document.getElementById('status-txt');
-  if (!pill||!span) return;
+  if (!pill || !span) return;
   span.textContent = txt;
-  pill.className = 'status-pill' + (state==='running'?' running':state==='done'?' done':'');
+  pill.className = 'status-pill' + (state === 'running' ? ' running' : state === 'done' ? ' done' : '');
 }
 
-function toast(msg, type='ok') {
-  const old = document.getElementById('_toast');
-  if (old) old.remove();
+function toast(msg, type = 'ok') {
+  document.getElementById('_toast')?.remove();
   const el = document.createElement('div');
-  el.id = '_toast';
-  el.className = `toast ${type}`;
-  el.textContent = msg;
+  el.id = '_toast'; el.className = `toast ${type}`; el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
